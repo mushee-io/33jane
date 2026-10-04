@@ -2,19 +2,21 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/health", "destination": "/api/index?action=health" },
-    { "source": "/readiness", "destination": "/api/index?action=readiness" },
-    { "source": "/assets", "destination": "/api/index?action=assets" },
-    { "source": "/assets/:id", "destination": "/api/index?action=asset&id=:id" },
-    { "source": "/integrations", "destination": "/api/index?action=integrations" },
-    { "source": "/evidence", "destination": "/api/index?action=evidence" },
-    { "source": "/monitor", "destination": "/api/index?action=monitor" },
-    { "source": "/live/quote", "destination": "/api/index?action=live-quote" },
-    { "source": "/eligibility", "destination": "/api/index?action=eligibility" },
-    { "source": "/quote", "destination": "/api/index?action=quote" },
-    { "source": "/route", "destination": "/api/index?action=route" },
-    { "source": "/simulate", "destination": "/api/index?action=simulate" },
-    { "source": "/cow/solve", "destination": "/api/index?action=cow-solve" }
+    { "source": "/api/:path*", "destination": "/api/index?path=:path*" },
+
+    { "source": "/health", "destination": "/api/index?path=health" },
+    { "source": "/readiness", "destination": "/api/index?path=readiness" },
+    { "source": "/assets", "destination": "/api/index?path=assets" },
+    { "source": "/assets/:id", "destination": "/api/index?path=assets/:id" },
+    { "source": "/integrations", "destination": "/api/index?path=integrations" },
+    { "source": "/evidence", "destination": "/api/index?path=evidence" },
+    { "source": "/monitor", "destination": "/api/index?path=monitor" },
+    { "source": "/live/quote", "destination": "/api/index?path=live/quote" },
+    { "source": "/eligibility", "destination": "/api/index?path=eligibility" },
+    { "source": "/quote", "destination": "/api/index?path=route" },
+    { "source": "/route", "destination": "/api/index?path=route" },
+    { "source": "/simulate", "destination": "/api/index?path=execute/prepare" },
+    { "source": "/cow/solve", "destination": "/api/index?path=cow/route" }
   ],
   "functions": {
     "api/index.ts": {
