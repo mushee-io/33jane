@@ -1,0 +1,19 @@
+{
+  "name": "33jane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Permissioned-liquidity infrastructure for CoW Protocol",
+  "scripts": {
+    "dev": "tsx watch src/api/server.ts",
+    "start": "tsx src/api/server.ts",
+    "demo": "tsx scripts/demo.ts",
+    "test": "tsx --test test/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}
