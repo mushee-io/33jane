@@ -98,6 +98,7 @@ export function createApiHandler(app: App) {
           id: adapter.id,
           pairs: (await adapter.listPairs()).length
         })));
+        const eligibilityProvider = await p.eligibilityProvider.health();
         return json({
           status: database.status === "connected" || database.mode === "memory" ? "ok" : "degraded",
           service: "33Jane",
@@ -107,10 +108,15 @@ export function createApiHandler(app: App) {
           persistenceMode: database.mode,
           rpc: Boolean(process.env.ETH_RPC_URL),
           cow: process.env.ENABLE_COW_LIVE === "true",
-          eligibilityProvider: Boolean(process.env.ELIGIBILITY_PROVIDER_URL),
+          eligibilityProvider: eligibilityProvider.ok,
+          eligibilityProviderStatus: eligibilityProvider,
           issuerProvider: Boolean(process.env.OPENEDEN_QUOTE_URL),
           adapters
         }, 200, rateHeaders);
+      }
+
+      if (request.method === "GET" && path === "/api/eligibility/provider") {
+        return json(await p.eligibilityProvider.health(), 200, rateHeaders);
       }
 
       if (request.method === "GET" && path === "/api/openapi") {
@@ -255,6 +261,7 @@ export function createApiHandler(app: App) {
 
       if (request.method === "GET" && path === "/api/readiness") {
         const db = await p.store.health();
+        const eligibilityProvider = await p.eligibilityProvider.health();
         return json({
           network: "ethereum-mainnet",
           persistence: db,
@@ -262,7 +269,7 @@ export function createApiHandler(app: App) {
             walletConnection: true,
             cowLiveQuote: process.env.ENABLE_COW_LIVE === "true",
             rpcSimulation: Boolean(process.env.ETH_RPC_URL),
-            issuerEligibilityProvider: Boolean(process.env.ELIGIBILITY_PROVIDER_URL),
+            issuerEligibilityProvider: eligibilityProvider.ok,
             issuerMintRedeemExecution: Boolean(process.env.OPENEDEN_QUOTE_URL),
             orderLifecycle: true,
             auditTrail: true,
@@ -271,7 +278,7 @@ export function createApiHandler(app: App) {
           },
           blockers: [
             ...(!process.env.DATABASE_URL ? [{ code: "DATABASE_URL_REQUIRED", message: "Postgres is required for durable production persistence." }] : []),
-            ...(!process.env.ELIGIBILITY_PROVIDER_URL ? [{ code: "ELIGIBILITY_PROVIDER_REQUIRED", message: "Production permissioned assets require a trusted eligibility provider." }] : []),
+            ...(!eligibilityProvider.ok ? [{ code: "ELIGIBILITY_PROVIDER_REQUIRED", message: "Production permissioned assets require a trusted eligibility provider." }] : []),
             ...(!process.env.OPENEDEN_QUOTE_URL ? [{ code: "ISSUER_PROVIDER_REQUIRED", message: "Direct OpenEden mint/redeem requires approved provider access." }] : []),
             { code: "COW_ORDER_SUBMISSION_GATED", message: "33Jane prepares CoW-compatible settlement data but does not yet submit signed CoW orders." }
           ]

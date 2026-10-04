@@ -55,6 +55,7 @@ Administrative writes are protected with `ADMIN_API_KEY`.
 - `GET /api/assets`
 - `GET /api/assets/:assetId`
 - `GET /api/assets/:assetId/rules`
+- `GET /api/eligibility/provider` — eligibility-provider health/source
 - `POST /api/assets` (admin)
 - `PATCH /api/assets/:assetId` (admin)
 
@@ -74,7 +75,9 @@ Rules are composable and machine-readable:
 - transfer restrictions
 - liquidity venue restrictions
 
-Production assets do not trust browser self-attestation. If a production asset requires KYC/accreditation/transfer permission, configure `ELIGIBILITY_PROVIDER_URL`.
+Production assets do not trust browser self-attestation. For OpenEden TBILL on Ethereum, 33Jane now reads the issuer-controlled on-chain KycManager directly using `ETH_RPC_URL` and checks `isKyc` / `isBanned`. The current mainnet KycManager address is `0x51Be497AcEd1a2C19f6151064301e356B020D947`.
+
+For other issuers, an external trusted eligibility service can still be configured with `ELIGIBILITY_PROVIDER_URL`.
 
 ## Liquidity adapters
 

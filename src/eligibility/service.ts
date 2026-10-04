@@ -3,15 +3,19 @@ import type { DataStore } from "../persistence/store.js";
 import type { AssetService } from "../production/asset-service.js";
 import type { EligibilityInput, EligibilityResult } from "../production/types.js";
 import { RuleEngine } from "../rules/engine.js";
-import { ExternalEligibilityProvider } from "./external-provider.js";
+import type { TrustedEligibilityProvider } from "./provider.js";
 
 export class EligibilityService {
   constructor(
     private readonly assets: AssetService,
     private readonly rules: RuleEngine,
-    private readonly provider: ExternalEligibilityProvider,
+    private readonly provider: TrustedEligibilityProvider,
     private readonly store: DataStore
   ) {}
+
+  providerHealth() {
+    return this.provider.health();
+  }
 
   async check(input: EligibilityInput, orderId?: string): Promise<EligibilityResult> {
     const asset = await this.assets.resolve(input.chainId, input.asset);
@@ -19,7 +23,9 @@ export class EligibilityService {
       ? { verified: false, source: "demo" as const }
       : await this.provider.verify(input, asset);
 
-    const demoClaims = asset.metadata.environment === "demo" ? (input.demoClaims ?? {}) : {};
+    const demoClaims = asset.metadata.environment === "demo"
+      ? (input.demoClaims ?? {})
+      : {};
 
     const checks = await this.rules.evaluate({
       wallet: input.wallet,

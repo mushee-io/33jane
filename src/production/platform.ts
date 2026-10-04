@@ -1,6 +1,7 @@
 import type { AdapterRegistry } from "../adapters/adapter-registry.js";
 import type { AssetRegistry } from "../registry/asset-registry.js";
 import type { SettlementSafetyEngine } from "../simulation/safety-engine.js";
+import type { JsonRpcClient } from "../simulation/rpc.js";
 import { createDataStore } from "../persistence/factory.js";
 import { toProductionAsset, AssetService } from "./asset-service.js";
 import { DEMO_PRODUCTION_ASSETS } from "./demo-fixtures.js";
@@ -21,6 +22,8 @@ import {
   WalletWhitelistRule
 } from "../rules/core-rules.js";
 import { ExternalEligibilityProvider } from "../eligibility/external-provider.js";
+import { OpenEdenOnchainEligibilityProvider } from "../eligibility/openeden-onchain-provider.js";
+import { CompositeEligibilityProvider } from "../eligibility/composite-provider.js";
 import { EligibilityService } from "../eligibility/service.js";
 import { ExecutableRouteService } from "./route-service.js";
 import { ExecutionService } from "./execution-service.js";
@@ -31,7 +34,8 @@ import { CowSettlementBuilder } from "../integrations/cow/cow-settlement-builder
 export function createProductionPlatform(
   registry: AssetRegistry,
   adapters: AdapterRegistry,
-  safety: SettlementSafetyEngine
+  safety: SettlementSafetyEngine,
+  rpc?: JsonRpcClient
 ) {
   const store = createDataStore();
   const seeds = [
@@ -54,12 +58,19 @@ export function createProductionPlatform(
     new TransferRestrictionRule(),
     new LiquidityVenueRule()
   ]);
+
+  const eligibilityProvider = new CompositeEligibilityProvider([
+    new OpenEdenOnchainEligibilityProvider(rpc),
+    new ExternalEligibilityProvider()
+  ]);
+
   const eligibility = new EligibilityService(
     assets,
     rules,
-    new ExternalEligibilityProvider(),
+    eligibilityProvider,
     store
   );
+
   const routes = new ExecutableRouteService(assets, eligibility, adapters, store, audit);
   const executions = new ExecutionService(store, adapters, safety, audit);
   const orders = new OrderService(store, routes, executions, audit);
@@ -71,6 +82,7 @@ export function createProductionPlatform(
     assets,
     audit,
     rules,
+    eligibilityProvider,
     eligibility,
     routes,
     executions,

@@ -118,7 +118,7 @@ export function createApp() {
   const safety = new SettlementSafetyEngine(adapters, evidence, rpc);
   const cowSolver = new CowSubsolver(routes, safety, evidence);
   const monitor = new IntegrationMonitor(assets, rpc);
-  const production = createProductionPlatform(assets, adapters, safety);
+  const production = createProductionPlatform(assets, adapters, safety, rpc);
 
   return {
     assets,
