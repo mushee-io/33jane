@@ -106,7 +106,7 @@
             <button class="secondary" id="routeBtn">Find executable route</button>
             <button class="secondary" id="prepareBtn" disabled>Prepare settlement</button>
           </div>
-          <div class="notice" id="executionNotice">Issuer eligibility is separate from a market quote. 33Jane will not enable issuer mint/redeem execution until a real provider attestation path is connected.</div>
+          <div class="notice" id="executionNotice">OpenEden eligibility and the live issuer vault are connected. Next: check constraints, then find an executable route. Wallet signing and broadcast remain gated until the route passes.</div>
         </div>
 
         <div class="card">
@@ -117,8 +117,9 @@
             <div class="stage"><div><b>CoW live market</b><small>Public CoW Orderbook quote API.</small></div><span class="chip warn" id="cowStage">CHECK</span></div>
             <div class="stage"><div><b>RWA constraint engine</b><small>OpenEden TBILL policy model.</small></div><span class="chip ok">ONLINE</span></div>
             <div class="stage"><div><b>Ethereum simulation</b><small>RPC-backed contract checks / eth_call where calldata exists.</small></div><span class="chip" id="rpcStage">—</span></div>
-            <div class="stage"><div><b>Issuer eligibility provider</b><small>Required for real mint / redeem execution.</small></div><span class="chip" id="providerStage">—</span></div>
-            <div class="stage"><div><b>Order submission</b><small>Gated until signing + issuer path are ready.</small></div><span class="chip warn">GATED</span></div>
+            <div class="stage"><div><b>Issuer eligibility provider</b><small>OpenEden on-chain KYC / ban checks.</small></div><span class="chip" id="providerStage">—</span></div>
+            <div class="stage"><div><b>OpenEden issuer vault</b><small>Live mint / redeem contract availability.</small></div><span class="chip" id="issuerStage">—</span></div>
+            <div class="stage"><div><b>Order submission</b><small>Route + calldata preparation are live; wallet signing/broadcast is the remaining gate.</small></div><span class="chip warn">SIGNING GATED</span></div>
           </div>
         </div>
       </div>
@@ -148,7 +149,7 @@
 
     <section class="view" id="view-integrations">
       <div class="card"><h2>Liquidity integrations</h2><p class="sub">Every source is normalized into the same 33Jane adapter interface.</p><div class="integrationlist" id="integrationList"></div></div>
-      <div class="card" style="margin-top:16px"><h2>Issuer bridge</h2><p class="sub">OpenEden direct mint/redeem remains intentionally gated until approved provider access is configured.</p><div class="notice">This prevents the demo from pretending a self-declared KYC flag is equivalent to real issuer eligibility.</div></div>
+      <div class="card" style="margin-top:16px"><h2>Issuer bridge</h2><p class="sub">OpenEden is connected directly through its Ethereum vault and KYC contracts.</p><div class="notice">33Jane reads issuer-controlled eligibility, fees, rate, limits, pause state and builds real USDC approval + deposit calldata. No browser self-attestation is trusted for production eligibility.</div></div>
     </section>
 
     <section class="view" id="view-activity">
@@ -190,8 +191,8 @@
         </div>
       </div>
       <div class="grid cols2" style="margin-top:16px">
-        <div class="card"><h3>What is real now</h3><p class="sub">Production OpenEden TBILL metadata, Ethereum RPC health, public CoW live quote checks, wallet connection, normalized adapters, routing and simulation infrastructure.</p></div>
-        <div class="card"><h3>What remains gated</h3><p class="sub">Issuer-grade eligibility verification, approved direct mint/redeem credentials and browser order signing/submission. Those require provider access and additional security work.</p></div>
+        <div class="card"><h3>What is real now</h3><p class="sub">Production OpenEden TBILL metadata, Ethereum RPC health, OpenEden on-chain KYC, live issuer vault reads, mint/redeem availability, public CoW quote checks, routing and settlement preparation.</p></div>
+        <div class="card"><h3>What remains gated</h3><p class="sub">The final browser signing + broadcast step. 33Jane can prepare a real route and calldata, but it will not submit a transaction until the connected wallet passes issuer eligibility and the route is executable.</p></div>
       </div>
     </section>
   </main>
@@ -250,7 +251,15 @@
       document.getElementById('sideDot').classList.add('on');
       document.getElementById('sideStatus').textContent='33Jane API online · v'+health.version;
       chip(document.getElementById('rpcStage'),health.rpc,'LIVE','OFF');
-      chip(document.getElementById('providerStage'),health.eligibilityProvider && health.issuerProvider,'CONNECTED','NOT CONNECTED');
+      chip(document.getElementById('providerStage'),health.eligibilityProvider,'CONNECTED','NOT CONNECTED');
+      chip(document.getElementById('issuerStage'),health.issuerProvider,'LIVE','OFF');
+      if(health.issuerProviderStatus){
+        const s=health.issuerProviderStatus;
+        document.getElementById('executionNotice').textContent=
+          s.mintAvailable
+            ? 'OpenEden eligibility + issuer vault are live. Click "Check 33Jane constraints", then "Find executable route".'
+            : 'OpenEden issuer vault is reachable, but minting is currently unavailable. 33Jane will block execution safely.';
+      }
       document.getElementById('cowHealth').textContent=health.cow?'LIVE':'OFF';
       document.getElementById('productionCount').textContent=state.assets.filter(a=>a.metadata?.environment==='production').length;
       const prodHealth=(monitor.assets||[]).filter(a=>a.environment==='production');
@@ -293,11 +302,11 @@
       const buy=q.buyAmount||q.buyAmountAfterFee||data.quote?.buyAmount;
       document.getElementById('routeSummary').innerHTML=`<div class="stage"><div><b>CoW market quote</b><small>Live Ethereum mainnet response</small></div><span class="chip ok">FOUND</span></div>
         <div class="stage"><div><b>Estimated output</b><small>${buy?prettyAtomic(buy,6)+' TBILL':'See raw quote'}</small></div><span class="chip purple">LIVE</span></div>
-        <div class="stage"><div><b>Issuer execution</b><small>Requires provider eligibility / mint-redeem access</small></div><span class="chip warn">GATED</span></div>`;
+        <div class="stage"><div><b>Issuer execution</b><small>${state.health?.issuerProvider?'Live OpenEden vault available':'Issuer vault unavailable'}</small></div><span class="chip ${state.health?.issuerProvider?'ok':'warn'}">${state.health?.issuerProvider?'LIVE':'OFF'}</span></div>`;
     }catch(e){
       document.getElementById('cowStage').textContent='NO ROUTE';document.getElementById('cowStage').className='chip warn';
       term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
-      document.getElementById('routeSummary').innerHTML='<div class="stage"><div><b>CoW market quote</b><small>The live API did not return an executable quote for this pair/size.</small></div><span class="chip warn">NO LIQUIDITY</span></div><div class="notice">That is a real market result, not a synthetic fallback. 33Jane can still expose issuer/RFQ liquidity once those providers are connected.</div>';
+      document.getElementById('routeSummary').innerHTML='<div class="stage"><div><b>CoW market quote</b><small>The live API did not return an executable quote for this pair/size.</small></div><span class="chip warn">NO LIQUIDITY</span></div><div class="notice">That is a real CoW market result. 33Jane can still use the live OpenEden issuer vault when the connected wallet satisfies issuer eligibility and vault limits.</div>';
     }finally{btn.disabled=false;btn.textContent='Check live CoW quote'}
   }
 
@@ -314,7 +323,7 @@
     }catch(e){
       term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
       const reasons=e.data?.reasons||[];
-      document.getElementById('routeSummary').innerHTML=`<div class="stage"><div><b>33Jane eligibility gate</b><small>${reasons.join(', ')||'Provider eligibility is not verified.'}</small></div><span class="chip warn">BLOCKED</span></div><div class="notice">This is expected until a real issuer attestation/provider integration is connected. 33Jane intentionally does not let the browser self-declare professional-investor eligibility.</div>`;
+      document.getElementById('routeSummary').innerHTML=`<div class="stage"><div><b>33Jane eligibility gate</b><small>${reasons.join(', ')||'Provider eligibility is not verified.'}</small></div><span class="chip warn">BLOCKED</span></div><div class="notice">This is a real issuer eligibility rejection from the connected OpenEden KYC path. 33Jane intentionally does not let the browser self-declare professional-investor eligibility.</div>`;
     }
   }
 
