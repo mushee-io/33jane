@@ -20,6 +20,8 @@ export * from "./adapters/issuer-adapter.js";
 export * from "./adapters/rfq-adapter.js";
 export * from "./adapters/cow-orderbook-adapter.js";
 export * from "./adapters/provider-http-adapter.js";
+export * from "./adapters/openeden-vault-adapter.js";
+export * from "./issuers/openeden-onchain.js";
 export * from "./quotes/quote-engine.js";
 export * from "./router/route-engine.js";
 export * from "./simulation/rpc.js";

@@ -56,6 +56,7 @@ Administrative writes are protected with `ADMIN_API_KEY`.
 - `GET /api/assets/:assetId`
 - `GET /api/assets/:assetId/rules`
 - `GET /api/eligibility/provider` — eligibility-provider health/source
+- `GET /api/issuer/provider` — OpenEden on-chain issuer/vault health
 - `POST /api/assets` (admin)
 - `PATCH /api/assets/:assetId` (admin)
 
@@ -222,8 +223,10 @@ npm run dev
 - `ENABLE_COW_LIVE` — CoW Orderbook adapter
 - `ELIGIBILITY_PROVIDER_URL` — trusted production eligibility provider
 - `ELIGIBILITY_PROVIDER_API_KEY` — optional provider credential
-- `OPENEDEN_QUOTE_URL` — approved issuer/provider bridge
-- `OPENEDEN_API_KEY` — optional issuer credential
+- `OPENEDEN_QUOTE_URL` — optional approved HTTP issuer/provider bridge
+- `OPENEDEN_API_KEY` — optional HTTP issuer credential
+
+OpenEden mint execution no longer depends on the HTTP bridge: when `ETH_RPC_URL` is configured, 33Jane also registers the live Ethereum OpenEden vault adapter, reads the vault's rate/fees/limits from chain, and prepares real USDC approval + `deposit()` calldata.
 - `RATE_LIMIT_PER_MINUTE` — API rate limit
 
 ## Testing

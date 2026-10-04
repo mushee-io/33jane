@@ -17,6 +17,8 @@ import { RouteEngine } from "./router/route-engine.js";
 import { JsonRpcClient } from "./simulation/rpc.js";
 import { SettlementSafetyEngine } from "./simulation/safety-engine.js";
 import { createProductionPlatform } from "./production/platform.js";
+import { OpenEdenOnchainIssuer } from "./issuers/openeden-onchain.js";
+import { OpenEdenVaultAdapter } from "./adapters/openeden-vault-adapter.js";
 
 export function createApp() {
   const assets = createDemoRegistry();
@@ -86,6 +88,12 @@ export function createApp() {
     feeBps: 12
   }]));
 
+  const rpc = process.env.ETH_RPC_URL ? new JsonRpcClient(process.env.ETH_RPC_URL) : undefined;
+  const openEdenIssuer = new OpenEdenOnchainIssuer(rpc);
+  if (rpc) {
+    adapters.register(new OpenEdenVaultAdapter(openEdenIssuer));
+  }
+
   const cowClient = new CowOrderbookClient();
   if (process.env.ENABLE_COW_LIVE === "true") {
     adapters.register(new CowOrderbookAdapter(
@@ -112,7 +120,6 @@ export function createApp() {
     }));
   }
 
-  const rpc = process.env.ETH_RPC_URL ? new JsonRpcClient(process.env.ETH_RPC_URL) : undefined;
   const quotes = new QuoteEngine(assets, adapters, constraints, evidence);
   const routes = new RouteEngine(adapters, quotes);
   const safety = new SettlementSafetyEngine(adapters, evidence, rpc);
@@ -132,6 +139,7 @@ export function createApp() {
     monitor,
     evidence,
     rpc,
+    openEdenIssuer,
     production
   };
 }
