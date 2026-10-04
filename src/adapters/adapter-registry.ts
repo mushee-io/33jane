@@ -9,6 +9,16 @@ export class AdapterRegistry {
     this.adapters.set(adapter.id, adapter);
   }
 
+  get(id: string): LiquidityAdapter {
+    const adapter = this.adapters.get(id);
+    if (!adapter) throw new Error(`Unknown adapter: ${id}`);
+    return adapter;
+  }
+
+  has(id: string): boolean {
+    return this.adapters.has(id);
+  }
+
   list(): LiquidityAdapter[] {
     return [...this.adapters.values()];
   }

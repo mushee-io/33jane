@@ -6,29 +6,16 @@ const context = {
   claims: { kyc: true, jurisdiction: "GB" }
 };
 
-console.log("\n33Jane — milestones 1–5 demo\n");
+console.log("\n33Jane — milestones 1–10 demo\n");
 
-console.log("1) Assets");
+console.log("Assets");
 console.table(app.assets.list().map((asset) => ({
   id: asset.id,
   symbol: asset.symbol,
   category: asset.category,
-  settlement: asset.settlementModels.join(",")
+  environment: asset.metadata?.environment ?? "unknown"
 })));
 
-console.log("\n2) Eligibility");
-console.log(await app.constraints.evaluate(app.assets.get("1:mtbill-demo"), "50000000", context));
-
-console.log("\n3–4) Direct normalized quotes");
-const direct = await app.quotes.quote({
-  sellAssetId: "1:eurc-demo",
-  buyAssetId: "1:mtbill-demo",
-  sellAmountAtomic: "100000000",
-  context
-});
-console.dir(direct, { depth: null });
-
-console.log("\n5) Routes");
 const routes = await app.routes.findRoutes(
   "1:eurc-demo",
   "1:mtbill-demo",
@@ -36,4 +23,25 @@ const routes = await app.routes.findRoutes(
   context,
   { maxHops: 3 }
 );
-console.dir(routes.slice(0, 5), { depth: null });
+
+console.log("\nBest route");
+console.dir(routes[0], { depth: null });
+
+if (routes[0]) {
+  console.log("\nSettlement-safety certificate");
+  console.dir(await app.safety.simulateRoute(routes[0], context), { depth: null });
+}
+
+console.log("\nCoW sub-solver candidate");
+console.dir(await app.cowSolver.solve({
+  sellAssetId: "1:eurc-demo",
+  buyAssetId: "1:mtbill-demo",
+  sellAmountAtomic: "100000000",
+  context
+}), { depth: null });
+
+console.log("\nOpenEden production registry entry");
+console.dir(app.assets.get("1:openeden-tbill"), { depth: null });
+
+console.log("\nGrant evidence");
+console.dir(app.evidence.snapshot(), { depth: null });

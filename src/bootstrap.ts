@@ -1,15 +1,27 @@
 import { AdapterRegistry } from "./adapters/adapter-registry.js";
 import { ConstantProductAdapter } from "./adapters/cpmm-adapter.js";
+import { CowOrderbookAdapter } from "./adapters/cow-orderbook-adapter.js";
 import { IssuerAdapter } from "./adapters/issuer-adapter.js";
+import { ProviderHttpAdapter } from "./adapters/provider-http-adapter.js";
 import { RfqAdapter } from "./adapters/rfq-adapter.js";
+import { CowOrderbookClient } from "./cow/client.js";
+import { CowSubsolver } from "./cow/subsolver.js";
 import { ConstraintEngine } from "./eligibility/constraint-engine.js";
 import { ClaimEligibilityProvider } from "./eligibility/providers.js";
+import { EvidenceStore } from "./observability/evidence-store.js";
+import { IntegrationMonitor } from "./observability/monitor.js";
 import { QuoteEngine } from "./quotes/quote-engine.js";
 import { createDemoRegistry } from "./registry/demo-assets.js";
+import { PRODUCTION_ASSETS } from "./registry/production-assets.js";
 import { RouteEngine } from "./router/route-engine.js";
+import { JsonRpcClient } from "./simulation/rpc.js";
+import { SettlementSafetyEngine } from "./simulation/safety-engine.js";
 
 export function createApp() {
   const assets = createDemoRegistry();
+  for (const asset of PRODUCTION_ASSETS) assets.upsert(asset);
+
+  const evidence = new EvidenceStore();
   const constraints = new ConstraintEngine([new ClaimEligibilityProvider()]);
   const adapters = new AdapterRegistry();
 
@@ -42,8 +54,50 @@ export function createApp() {
     feeBps: 18
   }]));
 
-  const quotes = new QuoteEngine(assets, adapters, constraints);
-  const routes = new RouteEngine(adapters, quotes);
+  const cowClient = new CowOrderbookClient();
+  if (process.env.ENABLE_COW_LIVE === "true") {
+    adapters.register(new CowOrderbookAdapter(
+      "cow-mainnet-openeden",
+      "mainnet",
+      assets,
+      cowClient,
+      [
+        { sellAssetId: "1:usdc", buyAssetId: "1:openeden-tbill" },
+        { sellAssetId: "1:openeden-tbill", buyAssetId: "1:usdc" }
+      ]
+    ));
+  }
 
-  return { assets, constraints, adapters, quotes, routes };
+  if (process.env.OPENEDEN_QUOTE_URL) {
+    adapters.register(new ProviderHttpAdapter({
+      id: "openeden-provider-bridge",
+      quoteEndpoint: process.env.OPENEDEN_QUOTE_URL,
+      apiKey: process.env.OPENEDEN_API_KEY,
+      pairs: [
+        { sellAssetId: "1:usdc", buyAssetId: "1:openeden-tbill", liquidityModel: "issuer-mint" },
+        { sellAssetId: "1:openeden-tbill", buyAssetId: "1:usdc", liquidityModel: "issuer-redeem" }
+      ]
+    }));
+  }
+
+  const rpc = process.env.ETH_RPC_URL ? new JsonRpcClient(process.env.ETH_RPC_URL) : undefined;
+  const quotes = new QuoteEngine(assets, adapters, constraints, evidence);
+  const routes = new RouteEngine(adapters, quotes);
+  const safety = new SettlementSafetyEngine(adapters, evidence, rpc);
+  const cowSolver = new CowSubsolver(routes, safety, evidence);
+  const monitor = new IntegrationMonitor(assets, rpc);
+
+  return {
+    assets,
+    constraints,
+    adapters,
+    quotes,
+    routes,
+    safety,
+    cowSolver,
+    cowClient,
+    monitor,
+    evidence,
+    rpc
+  };
 }

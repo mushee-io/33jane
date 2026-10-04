@@ -7,6 +7,7 @@ import type {
 } from "../core/types.js";
 import { AdapterRegistry } from "../adapters/adapter-registry.js";
 import { ConstraintEngine } from "../eligibility/constraint-engine.js";
+import { EvidenceStore } from "../observability/evidence-store.js";
 import { AssetRegistry } from "../registry/asset-registry.js";
 
 export interface QuoteRejection {
@@ -25,7 +26,8 @@ export class QuoteEngine {
   constructor(
     private readonly assets: AssetRegistry,
     private readonly adapters: AdapterRegistry,
-    private readonly constraints: ConstraintEngine
+    private readonly constraints: ConstraintEngine,
+    private readonly evidence?: EvidenceStore
   ) {}
 
   async quote(request: QuoteRequest): Promise<QuoteResult> {
@@ -74,6 +76,7 @@ export class QuoteEngine {
     }
 
     accepted.sort((a, b) => compareAtomicDesc(a.quote.buyAmountAtomic, b.quote.buyAmountAtomic));
+    this.evidence?.recordQuote(accepted.length > 0);
 
     return {
       quotes: accepted.map((item, index) => ({ ...item, rank: index + 1 })),
