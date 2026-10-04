@@ -330,22 +330,63 @@
 
   async function findRoute(){
     if(!state.wallet){await connectWallet();if(!state.wallet)return}
-    const amount=Number(document.getElementById('amount').value);
-    const atomic=BigInt(Math.round(amount*1e6)).toString();
+    const btn=document.getElementById('routeBtn');
+    const prep=document.getElementById('prepareBtn');
     const term=document.getElementById('tradeTerminal');
+    const summary=document.getElementById('routeSummary');
+    const amount=Number(document.getElementById('amount').value);
+
+    if(!Number.isFinite(amount)||amount<=0){
+      term.textContent='Enter a valid USDC amount.';
+      return;
+    }
+
+    const atomic=BigInt(Math.round(amount*1e6)).toString();
+    btn.disabled=true;
+    prep.disabled=true;
+    btn.textContent='Checking route…';
+    term.textContent='33Jane is checking OpenEden KYC, issuer limits, live issuer liquidity and CoW liquidity…';
+    summary.className='';
+    summary.innerHTML='<div class="stage"><div><b>Finding executable route</b><small>Eligibility → issuer vault → liquidity → route selection</small></div><span class="chip purple">CHECKING</span></div>';
+
     try{
-      const data=await api('/api/route',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-        wallet:state.wallet,chainId:1,sellToken:'1:usdc',buyToken:'1:openeden-tbill',sellAmount:atomic,side:'BUY'
-      })});
+      const data=await api('/api/route',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({
+          wallet:state.wallet,
+          chainId:1,
+          sellToken:'1:usdc',
+          buyToken:'1:openeden-tbill',
+          sellAmount:atomic,
+          side:'BUY'
+        })
+      });
+
       state.routeId=data.routeId;
-      document.getElementById('prepareBtn').disabled=!data.bestRoute;
+      prep.disabled=!data.bestRoute;
       term.textContent=JSON.stringify(data,null,2);
-      document.getElementById('routeSummary').innerHTML='<div class="stage"><div><b>Best executable route</b><small>'+data.bestRoute.quote.adapterId+' · '+prettyAtomic(data.bestRoute.quote.buyAmount,6)+' TBILL</small></div><span class="chip ok">EXECUTABLE</span></div>';
+
+      const q=data.bestRoute?.quote;
+      summary.innerHTML=q
+        ? '<div class="stage"><div><b>Best executable route</b><small>'+q.adapterId+' · '+prettyAtomic(q.buyAmount,6)+' TBILL</small></div><span class="chip ok">EXECUTABLE</span></div><div class="stage"><div><b>Next</b><small>Route passed. Prepare the settlement calldata before any wallet signing.</small></div><span class="chip purple">PREPARE</span></div>'
+        : '<div class="stage"><div><b>Route result</b><small>No executable route was returned.</small></div><span class="chip warn">BLOCKED</span></div>';
     }catch(e){
-      state.routeId=e.data?.routeId||null;
-      document.getElementById('prepareBtn').disabled=true;
-      term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
-      document.getElementById('routeSummary').innerHTML='<div class="stage"><div><b>Best executable route</b><small>33Jane rejected execution before settlement.</small></div><span class="chip warn">BLOCKED</span></div>';
+      const data=e.data||{error:e.message};
+      state.routeId=data.routeId||null;
+      prep.disabled=true;
+      term.textContent=JSON.stringify(data,null,2);
+
+      const failedChecks=(data.constraints||[]).filter(x=>x.passed===false).map(x=>x.code||x.message);
+      const rejected=(data.rejected||[]).map(x=>x.reason);
+      const reasons=[...failedChecks,...rejected].filter(Boolean);
+      const reasonText=reasons.length ? reasons.join(' · ') : (data.error||e.message||'Route rejected');
+
+      summary.innerHTML='<div class="stage"><div><b>33Jane blocked this route</b><small>'+reasonText+'</small></div><span class="chip warn">BLOCKED</span></div><div class="notice">This means the button worked: 33Jane evaluated the live route and stopped before settlement because a production constraint did not pass.</div>';
+    }finally{
+      btn.disabled=false;
+      btn.textContent='Find executable route';
+      setTimeout(()=>summary.scrollIntoView({behavior:'smooth',block:'center'}),100);
     }
   }
 
