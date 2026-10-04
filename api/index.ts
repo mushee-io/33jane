@@ -63,12 +63,13 @@ export default {
         return json({
           ok: true,
           service: "33jane",
-          version: "0.2.1",
+          version: "0.3.0",
           deployment: "vercel",
           milestones: [1,2,3,4,5,6,7,8,9,10],
           liveCow: process.env.ENABLE_COW_LIVE === "true",
           rpcConfigured: Boolean(process.env.ETH_RPC_URL),
-          providerBridgeConfigured: Boolean(process.env.OPENEDEN_QUOTE_URL)
+          providerBridgeConfigured: Boolean(process.env.OPENEDEN_QUOTE_URL),
+          cowQuoteApi: true
         }, 200, rateHeaders);
       }
 
@@ -98,7 +99,78 @@ export default {
         return json({ assets: await app.monitor.scan() }, 200, rateHeaders);
       }
 
+      if (action === "readiness" && request.method === "GET") {
+        return json({
+          network: "ethereum-mainnet",
+          capabilities: {
+            walletConnection: true,
+            cowLiveQuote: true,
+            rpcSimulation: Boolean(process.env.ETH_RPC_URL),
+            openEdenAssetRegistry: true,
+            issuerEligibilityProvider: Boolean(process.env.OPENEDEN_QUOTE_URL),
+            issuerMintRedeemExecution: Boolean(process.env.OPENEDEN_QUOTE_URL),
+            cowOrderSubmission: false
+          },
+          blockers: [
+            ...(!process.env.OPENEDEN_QUOTE_URL ? [{
+              code: "ISSUER_PROVIDER_REQUIRED",
+              message: "OpenEden issuer eligibility and direct mint/redeem execution require an approved provider integration."
+            }] : []),
+            {
+              code: "COW_ORDER_SIGNING_NOT_ENABLED",
+              message: "Live CoW order submission is intentionally gated until the browser signing flow is enabled and audited."
+            }
+          ]
+        }, 200, rateHeaders);
+      }
+
       const body = await bodyFrom(request);
+
+      if (action === "live-quote" && request.method === "POST") {
+        const sellAssetId = String(body.sellAssetId ?? "");
+        const buyAssetId = String(body.buyAssetId ?? "");
+        const sellAmountAtomic = String(body.sellAmountAtomic ?? "");
+        const wallet = String(body.wallet ?? "");
+
+        if (!/^0x[a-fA-F0-9]{40}$/.test(wallet)) {
+          return json({ error: "VALID_WALLET_REQUIRED" }, 400, rateHeaders);
+        }
+        if (!/^\d+$/.test(sellAmountAtomic) || BigInt(sellAmountAtomic) <= 0n) {
+          return json({ error: "VALID_SELL_AMOUNT_REQUIRED" }, 400, rateHeaders);
+        }
+
+        const sell = app.assets.get(sellAssetId);
+        const buy = app.assets.get(buyAssetId);
+        if (sell.chainId !== 1 || buy.chainId !== 1) {
+          return json({ error: "LIVE_QUOTE_CURRENTLY_ETHEREUM_ONLY" }, 400, rateHeaders);
+        }
+
+        try {
+          const quote = await app.cowClient.getQuote("mainnet", {
+            sellToken: sell.address,
+            buyToken: buy.address,
+            sellAmountBeforeFee: sellAmountAtomic,
+            kind: "sell",
+            from: wallet,
+            receiver: wallet,
+            priceQuality: "optimal"
+          });
+          return json({
+            source: "cow-orderbook-mainnet",
+            live: true,
+            sellAsset: { id: sell.id, symbol: sell.symbol, address: sell.address },
+            buyAsset: { id: buy.id, symbol: buy.symbol, address: buy.address },
+            quote
+          }, 200, rateHeaders);
+        } catch (error) {
+          return json({
+            source: "cow-orderbook-mainnet",
+            live: true,
+            executable: false,
+            error: error instanceof Error ? error.message : "COW_LIVE_QUOTE_FAILED"
+          }, 422, rateHeaders);
+        }
+      }
 
       if (action === "eligibility" && request.method === "POST") {
         const assetId = String(body.assetId ?? "");

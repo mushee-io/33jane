@@ -1,254 +1,301 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="description" content="33Jane — permissioned-liquidity infrastructure for CoW Protocol." />
-  <title>33Jane — RWA Gateway for CoW</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="description" content="33Jane — permissioned RWA liquidity infrastructure for CoW Protocol."/>
+  <title>33Jane — RWA Execution Console</title>
   <style>
     :root{
-      --bg:#f4f1ff;--panel:#ffffff;--ink:#17131f;--muted:#6d6678;
-      --line:#ded8ea;--purple:#642cff;--purple2:#8f68ff;--green:#158b57;
-      --shadow:0 18px 50px rgba(54,35,100,.10)
+      --bg:#f6f3ff;--surface:#fff;--ink:#16111d;--muted:#716a7e;--line:#ded8e8;
+      --purple:#632cff;--purple2:#8c68ff;--green:#16945e;--amber:#b87312;--red:#c94949;
+      --dark:#17131d;--soft:#efe9ff;--shadow:0 18px 55px rgba(42,24,83,.08)
     }
-    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#faf8ff 0%,var(--bg) 100%);color:var(--ink)}
-    a{color:inherit}.wrap{max-width:1180px;margin:auto;padding:28px 24px 70px}
-    nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:56px}
-    .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.03em;font-size:22px}
-    .mark{width:34px;height:34px;border-radius:12px;background:var(--purple);display:grid;place-items:center;color:white;box-shadow:0 9px 22px rgba(100,44,255,.25)}
-    .navlinks{display:flex;gap:10px;flex-wrap:wrap}.navlinks a{font-size:13px;text-decoration:none;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:#fff}
-    .hero{display:grid;grid-template-columns:1.35fr .65fr;gap:28px;align-items:stretch}
-    .hero h1{font-size:clamp(48px,7vw,88px);line-height:.92;letter-spacing:-.065em;margin:0 0 24px;max-width:850px}
-    .hero h1 span{color:var(--purple)}
-    .lede{font-size:19px;line-height:1.65;color:var(--muted);max-width:730px;margin:0}
-    .badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:22px}
-    .dot{width:8px;height:8px;border-radius:50%;background:#aaa}
-    .dot.live{background:#22a66a;box-shadow:0 0 0 4px rgba(34,166,106,.11)}
-    .status-card{background:linear-gradient(145deg,#201832,#0f0d16);color:white;border-radius:28px;padding:26px;box-shadow:var(--shadow);min-height:320px;display:flex;flex-direction:column;justify-content:space-between}
-    .status-card .tiny{font-size:12px;color:#b8afc8;text-transform:uppercase;letter-spacing:.12em}
-    .status-card .big{font-size:54px;font-weight:800;letter-spacing:-.06em}
-    .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .status-item{background:rgba(255,255,255,.07);padding:14px;border-radius:16px}.status-item b{display:block;font-size:18px;margin-top:4px}.status-item span{font-size:11px;color:#aaa1b7}
-    .section{margin-top:68px}.section h2{font-size:34px;letter-spacing:-.045em;margin:0 0 12px}.section p.sub{color:var(--muted);margin:0 0 25px}
-    .explainer{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}
-    .explainer-copy{background:#fff;border:1px solid var(--line);border-radius:26px;padding:28px;box-shadow:var(--shadow)}
-    .explainer-copy p{color:var(--muted);line-height:1.7;font-size:16px;margin:0 0 16px}
-    .explainer-copy strong{color:var(--ink)}
-    .flow{background:#15121b;color:#f3efff;border-radius:26px;padding:26px;box-shadow:var(--shadow)}
-    .flow-title{font-size:12px;color:#b8afc8;text-transform:uppercase;letter-spacing:.12em;margin-bottom:18px}
-    .flow-stack{display:grid;gap:9px}
-    .flow-node{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);padding:12px 14px;border-radius:14px;font-size:14px}
-    .flow-arrow{text-align:center;color:#8f68ff;font-weight:900}
-    .question-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
-    .question{background:#f7f4ff;border:1px solid #e8e1fb;border-radius:14px;padding:12px 13px;font-size:13px;color:#514b5a}
-    .vision{margin-top:18px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#f0eaff,#fbfaff);border:1px solid #dfd5ff}
-    .vision b{display:block;margin-bottom:6px}
-    .source-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(40,25,70,.035)}
-    .card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}.card h3{margin:10px 0 8px;font-size:20px;letter-spacing:-.03em}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
-    .terminal{background:#15121b;color:#f3efff;border-radius:24px;padding:22px;overflow:auto;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:190px}
-    .demo-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:16px}
-    button{border:0;border-radius:14px;padding:13px 17px;background:var(--purple);color:#fff;font-weight:750;cursor:pointer;font-size:14px;box-shadow:0 9px 18px rgba(100,44,255,.20)}
-    button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-    .pill{display:inline-block;padding:6px 9px;border-radius:999px;background:#efe9ff;color:#5322db;font-size:11px;font-weight:800;margin-right:6px;margin-top:7px}
-    footer{margin-top:70px;border-top:1px solid var(--line);padding-top:24px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
-    @media(max-width:850px){.hero,.demo-grid,.explainer{grid-template-columns:1fr}.cards,.question-grid{grid-template-columns:1fr}.navlinks{display:none}.hero h1{font-size:56px}.status-card{min-height:260px}}
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+    button,input,select{font:inherit} button{cursor:pointer}
+    .app{display:grid;grid-template-columns:235px 1fr;min-height:100vh}
+    aside{position:sticky;top:0;height:100vh;background:#17131d;color:#fff;padding:24px 18px;display:flex;flex-direction:column}
+    .brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:850;letter-spacing:-.04em;padding:4px 8px 28px}
+    .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--purple);box-shadow:0 10px 28px rgba(99,44,255,.35)}
+    .nav{display:grid;gap:7px}.nav button{border:0;background:transparent;color:#aaa2b8;text-align:left;padding:11px 12px;border-radius:12px;font-size:14px;font-weight:650}
+    .nav button:hover,.nav button.active{background:rgba(255,255,255,.08);color:#fff}
+    .sidebar-bottom{margin-top:auto;padding:12px 8px;color:#a9a1b6;font-size:12px;line-height:1.6}
+    .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#6e6875;margin-right:7px}.live-dot.on{background:#31c982;box-shadow:0 0 0 4px rgba(49,201,130,.12)}
+    main{padding:24px 30px 60px;min-width:0}
+    .topbar{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:28px}
+    .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted)}
+    .title{font-size:31px;font-weight:850;letter-spacing:-.045em;margin-top:4px}
+    .wallet{border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 14px;font-weight:750;color:var(--ink)}
+    .wallet.connected{border-color:#cfc1ff;background:#f7f3ff;color:#4e22ca}
+    .view{display:none}.view.active{display:block}
+    .grid{display:grid;gap:16px}.cols2{grid-template-columns:1.15fr .85fr}.cols3{grid-template-columns:repeat(3,1fr)}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+    .card h2,.card h3{margin:0;letter-spacing:-.035em}.card h2{font-size:23px}.card h3{font-size:18px}
+    .sub{color:var(--muted);font-size:14px;line-height:1.6;margin:8px 0 0}
+    .statusrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.chip{font-size:11px;font-weight:800;padding:7px 9px;border-radius:999px;background:#f1edf6;color:#655e70}
+    .chip.ok{background:#e8f8ef;color:#14774d}.chip.warn{background:#fff4df;color:#99600a}.chip.bad{background:#fdecec;color:#a53a3a}.chip.purple{background:var(--soft);color:#5625d9}
+    .tradebox{margin-top:18px;display:grid;gap:12px}
+    .field{border:1px solid var(--line);background:#fbfaff;border-radius:18px;padding:14px}
+    .field label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px}
+    .inputrow{display:flex;gap:10px;align-items:center}.inputrow input{flex:1;min-width:0;border:0;background:transparent;font-size:28px;font-weight:800;outline:none;color:var(--ink)}
+    .asset{border:1px solid var(--line);background:white;padding:9px 12px;border-radius:12px;font-weight:800}
+    .primary,.secondary{border:0;border-radius:14px;padding:13px 16px;font-weight:800}
+    .primary{background:var(--purple);color:white;box-shadow:0 10px 22px rgba(99,44,255,.22)}.primary:disabled{opacity:.48;cursor:not-allowed}
+    .secondary{background:#f0ecf7;color:#322a3b}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+    .stage{padding:14px 0;border-bottom:1px solid #ece7f2;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.stage:last-child{border-bottom:0}
+    .stage b{font-size:14px}.stage small{display:block;color:var(--muted);margin-top:4px;line-height:1.45}
+    .metric{font-size:28px;font-weight:850;letter-spacing:-.04em;margin-top:6px}.metriclabel{font-size:12px;color:var(--muted)}
+    .terminal{background:#17131d;color:#f6f0ff;border-radius:18px;padding:17px;min-height:220px;max-height:430px;overflow:auto;font:12px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+    .notice{border:1px solid #ecd9ac;background:#fff9eb;color:#785316;border-radius:16px;padding:13px 14px;font-size:13px;line-height:1.5;margin-top:14px}
+    .assetlist,.integrationlist{display:grid;gap:10px;margin-top:16px}.item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:15px;border:1px solid var(--line);border-radius:16px;background:#fcfbff}
+    .item strong{display:block}.item span{font-size:12px;color:var(--muted)}
+    .address{font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);word-break:break-all}
+    .bigcallout{background:linear-gradient(135deg,#211735,#15121d);color:white;border-radius:24px;padding:24px}.bigcallout h2{font-size:30px;margin:0;letter-spacing:-.045em}.bigcallout p{color:#beb5cb;line-height:1.65}
+    .pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:18px}.node{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:12px;text-align:center;font-size:12px}
+    .empty{padding:30px;text-align:center;color:var(--muted)}
+    @media(max-width:1050px){.app{grid-template-columns:1fr}aside{position:relative;height:auto;flex-direction:row;align-items:center;gap:12px;padding:12px 16px}.brand{padding:0}.nav{display:flex;overflow:auto}.sidebar-bottom{display:none}.cols2,.cols3{grid-template-columns:1fr}.pipeline{grid-template-columns:repeat(3,1fr)}main{padding:22px 16px}}
+    @media(max-width:620px){.topbar{align-items:flex-start;flex-direction:column}.pipeline{grid-template-columns:1fr 1fr}.title{font-size:27px}.inputrow input{font-size:23px}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <nav>
-      <div class="brand"><div class="mark">33</div>33Jane</div>
-      <div class="navlinks">
-        <a href="#what">What it does</a><a href="#stack">Stack</a><a href="/assets">Assets</a><a href="/evidence">Evidence</a>
-      </div>
-    </nav>
+<div class="app">
+  <aside>
+    <div class="brand"><div class="logo">33</div><span>33Jane</span></div>
+    <div class="nav">
+      <button class="active" data-view="trade">Trade</button>
+      <button data-view="network">RWA Network</button>
+      <button data-view="integrations">Integrations</button>
+      <button data-view="activity">Evidence</button>
+      <button data-view="about">Architecture</button>
+    </div>
+    <div class="sidebar-bottom"><span class="live-dot" id="sideDot"></span><span id="sideStatus">Checking infrastructure…</span><br/>Ethereum mainnet · CoW Protocol</div>
+  </aside>
 
-    <section class="hero">
-      <div>
-        <div class="badge"><span class="dot" id="statusDot"></span><span id="statusText">Checking network…</span></div>
-        <h1>Permissioned liquidity, <span>solvable.</span></h1>
-        <p class="lede">33Jane is an RWA execution gateway for CoW Protocol: normalize restricted assets, verify eligibility, discover routes, simulate settlement, and expose only safe candidates to solvers.</p>
-        <div class="actions"><button id="solveBtn" onclick="runSolver()">Run solver demo</button></div>
-      </div>
-      <div class="status-card">
-        <div>
-          <div class="tiny">Protocol status</div>
-          <div class="big" id="version">v0.2.1</div>
-        </div>
-        <div class="status-grid">
-          <div class="status-item"><span>Milestones</span><b id="milestones">10 / 10</b></div>
-          <div class="status-item"><span>Deployment</span><b>Vercel</b></div>
-          <div class="status-item"><span>CoW live</span><b id="cowLive">—</b></div>
-          <div class="status-item"><span>RPC</span><b id="rpc">—</b></div>
-        </div>
-      </div>
-    </section>
+  <main>
+    <div class="topbar">
+      <div><div class="eyebrow">Permissioned liquidity infrastructure</div><div class="title" id="pageTitle">RWA Execution Console</div></div>
+      <button class="wallet" id="walletBtn">Connect Wallet</button>
+    </div>
 
-    <section class="section" id="what">
-      <h2>What 33Jane does</h2>
-      <p class="sub">The translation and execution layer between CoW solvers and permissioned / RWA liquidity.</p>
-      <div class="explainer">
-        <div class="explainer-copy">
-          <p><strong>Normal ERC-20 liquidity is easy for solvers to understand.</strong> Permissioned assets are different. Tokenized treasuries, private credit, RFQ markets and issuer mint/redeem products can require KYC, wallet eligibility, minimum trade sizes, market hours, transfer restrictions or provider-specific settlement logic.</p>
-          <p>33Jane gives CoW one normalized way to understand those markets. It checks whether an order is eligible, finds available RWA liquidity, compares execution paths, builds the route and simulates settlement before anything becomes a solver candidate.</p>
-
-          <div class="question-grid">
-            <div class="question">Is this wallet eligible?</div>
-            <div class="question">Is the asset tradable now?</div>
-            <div class="question">Does the trade meet minimum size?</div>
-            <div class="question">Can the recipient receive the asset?</div>
-            <div class="question">Is issuer mint liquidity available?</div>
-            <div class="question">Is there RFQ or DEX liquidity?</div>
-            <div class="question">Which route gives the best output?</div>
-            <div class="question">Will settlement actually succeed?</div>
-          </div>
-
-          <div class="vision">
-            <b>Why this matters for CoW</b>
-            Instead of every solver integrating each RWA issuer separately, solvers integrate 33Jane once. 33Jane handles the protocol-specific restrictions and execution logic underneath.
-          </div>
-
-          <div class="source-row">
-            <span class="pill">Tokenized Treasuries</span>
-            <span class="pill">Tokenized Stocks</span>
-            <span class="pill">Private Credit</span>
-            <span class="pill">Gold / Commodities</span>
-            <span class="pill">Permissioned AMMs</span>
-            <span class="pill">Institutional RFQs</span>
-          </div>
-        </div>
-
-        <div class="flow">
-          <div class="flow-title">Order flow</div>
-          <div class="flow-stack">
-            <div class="flow-node">User order</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">CoW Protocol</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node"><strong>33Jane</strong></div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Check eligibility + restrictions</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Discover issuer / RFQ / DEX liquidity</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Compare quotes + build route</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Simulate settlement</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">Safe solver-ready candidate</div>
-            <div class="flow-arrow">↓</div>
-            <div class="flow-node">CoW solver</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="stack">
-      <h2>Execution stack</h2>
-      <p class="sub">From RWA constraints to solver-ready, simulation-gated execution.</p>
-      <div class="cards">
-        <div class="card"><div class="k">01 — Registry</div><h3>RWA asset model</h3><p>Canonical asset metadata, settlement modes, issuer data, quote currencies and provider-defined constraints.</p></div>
-        <div class="card"><div class="k">02 — Eligibility</div><h3>Constraint engine</h3><p>Wallet claims, jurisdiction rules, trade limits and market-state checks before an order becomes executable.</p></div>
-        <div class="card"><div class="k">03 — Liquidity</div><h3>Universal adapters</h3><p>Issuer mint/redeem, RFQ, AMM, provider bridge and CoW Orderbook liquidity through one interface.</p></div>
-        <div class="card"><div class="k">04 — Routing</div><h3>Execution graph</h3><p>Direct and multi-hop routes that combine standard DeFi liquidity with permissioned RWA liquidity.</p></div>
-        <div class="card"><div class="k">05 — Safety</div><h3>Simulation certificates</h3><p>Route continuity, quote freshness, execution-plan checks and optional eth_call validation before settlement.</p></div>
-        <div class="card"><div class="k">06 — CoW</div><h3>Solver candidates</h3><p>Only routes with passing safety certificates are surfaced through the CoW sub-solver interface.</p></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>Live registry</h2>
-      <p class="sub">The public deployment separates production asset metadata from synthetic demo liquidity.</p>
-      <div id="assets" class="cards"></div>
-    </section>
-
-    <section class="section">
-      <h2>Solver demo</h2>
-      <p class="sub">Runs the synthetic EURC → mTBILL route through routing + settlement-safety + sub-solver selection.</p>
-      <div class="demo-grid">
+    <section class="view active" id="view-trade">
+      <div class="grid cols2">
         <div class="card">
-          <div class="k">Request</div>
-          <h3>100 EURC → mTBILL</h3>
-          <p>Demo identity carries KYC and GB jurisdiction claims. No synthetic result is represented as production issuer liquidity.</p>
-          <div><span class="pill">KYC</span><span class="pill">GB</span><span class="pill">3 hops max</span></div>
+          <h2>Execute RWA intent</h2>
+          <p class="sub">Connect a wallet, check real CoW liquidity, verify 33Jane constraints, then simulate before execution.</p>
+          <div class="tradebox">
+            <div class="field">
+              <label>Sell</label>
+              <div class="inputrow"><input id="amount" inputmode="decimal" value="1000"/><div class="asset">USDC</div></div>
+            </div>
+            <div class="field">
+              <label>Buy</label>
+              <div class="inputrow"><input value="OpenEden TBILL" disabled/><div class="asset">TBILL</div></div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="quoteBtn">Check live CoW quote</button>
+            <button class="secondary" id="eligibilityBtn">Check 33Jane constraints</button>
+          </div>
+          <div class="notice" id="executionNotice">Issuer eligibility is separate from a market quote. 33Jane will not enable issuer mint/redeem execution until a real provider attestation path is connected.</div>
         </div>
-        <pre class="terminal" id="terminal">Press “Run solver demo” to request a candidate.</pre>
+
+        <div class="card">
+          <h2>Execution readiness</h2>
+          <p class="sub">This is the real production boundary for the current deployment.</p>
+          <div id="readinessStages">
+            <div class="stage"><div><b>Wallet</b><small>Connect an injected EVM wallet.</small></div><span class="chip warn" id="walletStage">WAITING</span></div>
+            <div class="stage"><div><b>CoW live market</b><small>Public CoW Orderbook quote API.</small></div><span class="chip warn" id="cowStage">CHECK</span></div>
+            <div class="stage"><div><b>RWA constraint engine</b><small>OpenEden TBILL policy model.</small></div><span class="chip ok">ONLINE</span></div>
+            <div class="stage"><div><b>Ethereum simulation</b><small>RPC-backed contract checks / eth_call where calldata exists.</small></div><span class="chip" id="rpcStage">—</span></div>
+            <div class="stage"><div><b>Issuer eligibility provider</b><small>Required for real mint / redeem execution.</small></div><span class="chip" id="providerStage">—</span></div>
+            <div class="stage"><div><b>Order submission</b><small>Gated until signing + issuer path are ready.</small></div><span class="chip warn">GATED</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid cols2" style="margin-top:16px">
+        <div class="card">
+          <h2>Live result</h2>
+          <p class="sub">No synthetic quote is shown here. This panel reports the actual CoW API response or its real failure reason.</p>
+          <pre class="terminal" id="tradeTerminal">Connect a wallet and request a live quote.</pre>
+        </div>
+        <div class="card">
+          <h2>33Jane route gate</h2>
+          <p class="sub">The route is only executable when market liquidity and permissioned-asset requirements both pass.</p>
+          <div id="routeSummary" class="empty">No route checked yet.</div>
+        </div>
       </div>
     </section>
 
-    <footer>
-      <span>33Jane · permissioned-liquidity infrastructure for CoW Protocol</span>
-      <span>Production issuer access is configuration-gated.</span>
-    </footer>
-  </div>
+    <section class="view" id="view-network">
+      <div class="grid cols3">
+        <div class="card"><div class="metriclabel">Production assets</div><div class="metric" id="productionCount">—</div></div>
+        <div class="card"><div class="metriclabel">RPC health</div><div class="metric" id="rpcHealth">—</div></div>
+        <div class="card"><div class="metriclabel">CoW adapter</div><div class="metric" id="cowHealth">—</div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><h2>RWA Registry</h2><p class="sub">Production metadata is clearly separated from demo fixtures.</p><div class="assetlist" id="assetList"></div></div>
+    </section>
 
-  <script>
-    const terminal = document.getElementById('terminal');
-    const solveBtn = document.getElementById('solveBtn');
+    <section class="view" id="view-integrations">
+      <div class="card"><h2>Liquidity integrations</h2><p class="sub">Every source is normalized into the same 33Jane adapter interface.</p><div class="integrationlist" id="integrationList"></div></div>
+      <div class="card" style="margin-top:16px"><h2>Issuer bridge</h2><p class="sub">OpenEden direct mint/redeem remains intentionally gated until approved provider access is configured.</p><div class="notice">This prevents the demo from pretending a self-declared KYC flag is equivalent to real issuer eligibility.</div></div>
+    </section>
 
-    async function loadHealth(){
-      try{
-        const r = await fetch('/health');
-        const h = await r.json();
-        if(!r.ok) throw new Error(h.error || 'health failed');
-        document.getElementById('statusDot').classList.add('live');
-        document.getElementById('statusText').textContent = '33Jane API online';
-        document.getElementById('version').textContent = 'v' + h.version;
-        document.getElementById('milestones').textContent = h.milestones.length + ' / 10';
-        document.getElementById('cowLive').textContent = h.liveCow ? 'ON' : 'OFF';
-        document.getElementById('rpc').textContent = h.rpcConfigured ? 'ON' : 'OFF';
-      }catch(e){
-        document.getElementById('statusText').textContent = 'API unavailable';
+    <section class="view" id="view-activity">
+      <div class="grid cols3">
+        <div class="card"><div class="metriclabel">Solve attempts</div><div class="metric" id="solveTotal">0</div></div>
+        <div class="card"><div class="metriclabel">Simulations</div><div class="metric" id="simTotal">0</div></div>
+        <div class="card"><div class="metriclabel">Adapters used</div><div class="metric" id="adapterTotal">0</div></div>
+      </div>
+      <div class="card" style="margin-top:16px"><h2>Runtime evidence</h2><p class="sub">Evidence is generated by this deployed service instance.</p><pre class="terminal" id="evidenceTerminal">Loading…</pre></div>
+    </section>
+
+    <section class="view" id="view-about">
+      <div class="bigcallout">
+        <h2>33Jane sits between RWA markets and CoW solvers.</h2>
+        <p>It standardizes restricted asset metadata, eligibility constraints, quotes, routes and settlement checks so a solver does not have to understand every issuer's custom system independently.</p>
+        <div class="pipeline">
+          <div class="node">RWA issuer</div><div class="node">33Jane adapter</div><div class="node">Eligibility</div><div class="node">Routing</div><div class="node">Simulation</div><div class="node">CoW solver</div>
+        </div>
+      </div>
+      <div class="grid cols2" style="margin-top:16px">
+        <div class="card"><h3>What is real now</h3><p class="sub">Production OpenEden TBILL metadata, Ethereum RPC health, public CoW live quote checks, wallet connection, normalized adapters, routing and simulation infrastructure.</p></div>
+        <div class="card"><h3>What remains gated</h3><p class="sub">Issuer-grade eligibility verification, approved direct mint/redeem credentials and browser order signing/submission. Those require provider access and additional security work.</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const state={wallet:null,health:null,readiness:null,assets:[],integrations:[],monitor:null};
+
+  function short(a){return a?a.slice(0,6)+'…'+a.slice(-4):'Connect Wallet'}
+  function prettyAtomic(v,d=6){try{return (Number(BigInt(v))/10**d).toLocaleString(undefined,{maximumFractionDigits:6})}catch{return v}}
+  function chip(el,ok,labelOk,labelBad){el.textContent=ok?labelOk:labelBad;el.className='chip '+(ok?'ok':'warn')}
+  function showView(name){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+    document.getElementById('view-'+name).classList.add('active');
+    document.querySelector('[data-view="'+name+'"]').classList.add('active');
+    const titles={trade:'RWA Execution Console',network:'RWA Network',integrations:'Integrations',activity:'Evidence',about:'Architecture'};
+    document.getElementById('pageTitle').textContent=titles[name];
+  }
+  document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+  async function api(path,options){
+    const r=await fetch(path,options);
+    const data=await r.json().catch(()=>({error:'INVALID_JSON'}));
+    if(!r.ok) throw Object.assign(new Error(data.error||('HTTP '+r.status)),{data,status:r.status});
+    return data;
+  }
+
+  async function connectWallet(){
+    if(!window.ethereum){alert('No injected EVM wallet found. Install MetaMask or another EIP-1193 wallet.');return}
+    try{
+      const accounts=await window.ethereum.request({method:'eth_requestAccounts'});
+      state.wallet=accounts[0]||null;
+      const chain=await window.ethereum.request({method:'eth_chainId'});
+      if(chain!=='0x1'){
+        try{await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x1'}]})}catch{}
       }
-    }
+      renderWallet();
+    }catch(e){console.error(e)}
+  }
+  function renderWallet(){
+    const btn=document.getElementById('walletBtn');
+    btn.textContent=state.wallet?short(state.wallet):'Connect Wallet';
+    btn.classList.toggle('connected',!!state.wallet);
+    const stage=document.getElementById('walletStage');
+    chip(stage,!!state.wallet,'CONNECTED','WAITING');
+  }
+  document.getElementById('walletBtn').onclick=connectWallet;
 
-    async function loadAssets(){
-      try{
-        const r = await fetch('/assets');
-        const data = await r.json();
-        const el = document.getElementById('assets');
-        el.innerHTML = data.assets.map(a => `
-          <div class="card">
-            <div class="k">${a.metadata?.environment || 'unknown'}</div>
-            <h3>${a.symbol}</h3>
-            <p>${a.name}<br><strong>${a.category}</strong><br>${a.issuer}</p>
-          </div>`).join('');
-      }catch(e){}
+  async function loadSystem(){
+    try{
+      const [health,readiness,assets,integrations,monitor,evidence]=await Promise.all([
+        api('/health'),api('/readiness'),api('/assets'),api('/integrations'),api('/monitor'),api('/evidence')
+      ]);
+      state.health=health;state.readiness=readiness;state.assets=assets.assets;state.integrations=integrations.adapters;state.monitor=monitor;
+      document.getElementById('sideDot').classList.add('on');
+      document.getElementById('sideStatus').textContent='33Jane API online · v'+health.version;
+      chip(document.getElementById('rpcStage'),health.rpcConfigured,'LIVE','OFF');
+      chip(document.getElementById('providerStage'),health.providerBridgeConfigured,'CONNECTED','NOT CONNECTED');
+      document.getElementById('cowHealth').textContent=health.liveCow?'LIVE':'OFF';
+      document.getElementById('productionCount').textContent=state.assets.filter(a=>a.metadata?.environment==='production').length;
+      const prodHealth=(monitor.assets||[]).filter(a=>a.environment==='production');
+      document.getElementById('rpcHealth').textContent=prodHealth.some(x=>x.status==='healthy')?'LIVE':(health.rpcConfigured?'CHECK':'OFF');
+      renderAssets();renderIntegrations();renderEvidence(evidence);
+    }catch(e){
+      document.getElementById('sideStatus').textContent='API unavailable';
     }
+  }
 
-    async function runSolver(){
-      solveBtn.disabled = true;
-      solveBtn.textContent = 'Solving…';
-      terminal.textContent = 'Requesting route and safety certificate…';
-      try{
-        const r = await fetch('/cow/solve',{
-          method:'POST',
-          headers:{'content-type':'application/json'},
-          body:JSON.stringify({
-            sellAssetId:'1:eurc-demo',
-            buyAssetId:'1:mtbill-demo',
-            sellAmountAtomic:'100000000',
-            maxHops:3,
-            context:{
-              wallet:'0x000000000000000000000000000000000000beef',
-              claims:{kyc:true,jurisdiction:'GB'}
-            }
-          })
-        });
-        const data = await r.json();
-        terminal.textContent = JSON.stringify(data,null,2);
-      }catch(e){
-        terminal.textContent = String(e);
-      }finally{
-        solveBtn.disabled = false;
-        solveBtn.textContent = 'Run solver demo';
-      }
+  function renderAssets(){
+    const box=document.getElementById('assetList');
+    box.innerHTML=state.assets.map(a=>`<div class="item"><div><strong>${a.symbol} · ${a.name}</strong><span>${a.category} · ${a.issuer}</span><div class="address">${a.address}</div></div><span class="chip ${a.metadata?.environment==='production'?'ok':'purple'}">${(a.metadata?.environment||'unknown').toUpperCase()}</span></div>`).join('');
+  }
+  function renderIntegrations(){
+    const box=document.getElementById('integrationList');
+    box.innerHTML=state.integrations.map(a=>`<div class="item"><div><strong>${a.id}</strong><span>${a.pairs.length} supported pair(s)</span></div><span class="chip ok">REGISTERED</span></div>`).join('')||'<div class="empty">No adapters registered.</div>';
+  }
+  function renderEvidence(e){
+    document.getElementById('solveTotal').textContent=e.solves?.total??0;
+    document.getElementById('simTotal').textContent=e.simulations?.total??0;
+    document.getElementById('adapterTotal').textContent=e.uniqueAdapters?.length??0;
+    document.getElementById('evidenceTerminal').textContent=JSON.stringify(e,null,2);
+  }
+
+  async function liveQuote(){
+    if(!state.wallet){await connectWallet();if(!state.wallet)return}
+    const btn=document.getElementById('quoteBtn'),term=document.getElementById('tradeTerminal');
+    const amount=Number(document.getElementById('amount').value);
+    if(!Number.isFinite(amount)||amount<=0){term.textContent='Enter a valid USDC amount.';return}
+    const atomic=BigInt(Math.round(amount*1e6)).toString();
+    btn.disabled=true;btn.textContent='Querying CoW…';term.textContent='Calling the live CoW Orderbook API on Ethereum mainnet…';
+    try{
+      const data=await api('/live/quote',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+        sellAssetId:'1:usdc',buyAssetId:'1:openeden-tbill',sellAmountAtomic:atomic,wallet:state.wallet
+      })});
+      document.getElementById('cowStage').textContent='LIQUIDITY';document.getElementById('cowStage').className='chip ok';
+      term.textContent=JSON.stringify(data,null,2);
+      const q=data.quote?.quote||data.quote||{};
+      const buy=q.buyAmount||q.buyAmountAfterFee||data.quote?.buyAmount;
+      document.getElementById('routeSummary').innerHTML=`<div class="stage"><div><b>CoW market quote</b><small>Live Ethereum mainnet response</small></div><span class="chip ok">FOUND</span></div>
+        <div class="stage"><div><b>Estimated output</b><small>${buy?prettyAtomic(buy,6)+' TBILL':'See raw quote'}</small></div><span class="chip purple">LIVE</span></div>
+        <div class="stage"><div><b>Issuer execution</b><small>Requires provider eligibility / mint-redeem access</small></div><span class="chip warn">GATED</span></div>`;
+    }catch(e){
+      document.getElementById('cowStage').textContent='NO ROUTE';document.getElementById('cowStage').className='chip warn';
+      term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
+      document.getElementById('routeSummary').innerHTML='<div class="stage"><div><b>CoW market quote</b><small>The live API did not return an executable quote for this pair/size.</small></div><span class="chip warn">NO LIQUIDITY</span></div><div class="notice">That is a real market result, not a synthetic fallback. 33Jane can still expose issuer/RFQ liquidity once those providers are connected.</div>';
+    }finally{btn.disabled=false;btn.textContent='Check live CoW quote'}
+  }
+
+  async function checkEligibility(){
+    if(!state.wallet){await connectWallet();if(!state.wallet)return}
+    const amount=Number(document.getElementById('amount').value);
+    const atomic=BigInt(Math.round(amount*1e6)).toString();
+    const term=document.getElementById('tradeTerminal');
+    try{
+      const data=await api('/eligibility',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
+        assetId:'1:openeden-tbill',amountAtomic:atomic,context:{wallet:state.wallet,claims:{}}
+      })});
+      term.textContent=JSON.stringify(data,null,2);
+    }catch(e){
+      term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
+      const reasons=e.data?.decision?.reasons||[];
+      document.getElementById('routeSummary').innerHTML=`<div class="stage"><div><b>33Jane eligibility gate</b><small>${reasons.join(', ')||'Provider eligibility is not verified.'}</small></div><span class="chip warn">BLOCKED</span></div><div class="notice">This is expected until a real issuer attestation/provider integration is connected. 33Jane intentionally does not let the browser self-declare professional-investor eligibility.</div>`;
     }
+  }
 
-    loadHealth();
-    loadAssets();
-  </script>
+  document.getElementById('quoteBtn').onclick=liveQuote;
+  document.getElementById('eligibilityBtn').onclick=checkEligibility;
+  if(window.ethereum){
+    window.ethereum.request({method:'eth_accounts'}).then(a=>{state.wallet=a[0]||null;renderWallet()}).catch(()=>{});
+    window.ethereum.on?.('accountsChanged',a=>{state.wallet=a[0]||null;renderWallet()});
+  }
+  renderWallet();loadSystem();
+</script>
 </body>
 </html>
