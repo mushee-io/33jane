@@ -1,0 +1,22 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/health", "destination": "/api/index?action=health" },
+    { "source": "/assets", "destination": "/api/index?action=assets" },
+    { "source": "/assets/:id", "destination": "/api/index?action=asset&id=:id" },
+    { "source": "/integrations", "destination": "/api/index?action=integrations" },
+    { "source": "/evidence", "destination": "/api/index?action=evidence" },
+    { "source": "/monitor", "destination": "/api/index?action=monitor" },
+    { "source": "/eligibility", "destination": "/api/index?action=eligibility" },
+    { "source": "/quote", "destination": "/api/index?action=quote" },
+    { "source": "/route", "destination": "/api/index?action=route" },
+    { "source": "/simulate", "destination": "/api/index?action=simulate" },
+    { "source": "/cow/solve", "destination": "/api/index?action=cow-solve" }
+  ],
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 30
+    }
+  }
+}

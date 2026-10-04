@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="33Jane — permissioned-liquidity infrastructure for CoW Protocol." />
+  <title>33Jane — RWA Gateway for CoW</title>
+  <style>
+    :root{
+      --bg:#f4f1ff;--panel:#ffffff;--ink:#17131f;--muted:#6d6678;
+      --line:#ded8ea;--purple:#642cff;--purple2:#8f68ff;--green:#158b57;
+      --shadow:0 18px 50px rgba(54,35,100,.10)
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#faf8ff 0%,var(--bg) 100%);color:var(--ink)}
+    a{color:inherit}.wrap{max-width:1180px;margin:auto;padding:28px 24px 70px}
+    nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:56px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:-.03em;font-size:22px}
+    .mark{width:34px;height:34px;border-radius:12px;background:var(--purple);display:grid;place-items:center;color:white;box-shadow:0 9px 22px rgba(100,44,255,.25)}
+    .navlinks{display:flex;gap:10px;flex-wrap:wrap}.navlinks a{font-size:13px;text-decoration:none;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:#fff}
+    .hero{display:grid;grid-template-columns:1.35fr .65fr;gap:28px;align-items:stretch}
+    .hero h1{font-size:clamp(48px,7vw,88px);line-height:.92;letter-spacing:-.065em;margin:0 0 24px;max-width:850px}
+    .hero h1 span{color:var(--purple)}
+    .lede{font-size:19px;line-height:1.65;color:var(--muted);max-width:730px;margin:0}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:22px}
+    .dot{width:8px;height:8px;border-radius:50%;background:#aaa}
+    .dot.live{background:#22a66a;box-shadow:0 0 0 4px rgba(34,166,106,.11)}
+    .status-card{background:linear-gradient(145deg,#201832,#0f0d16);color:white;border-radius:28px;padding:26px;box-shadow:var(--shadow);min-height:320px;display:flex;flex-direction:column;justify-content:space-between}
+    .status-card .tiny{font-size:12px;color:#b8afc8;text-transform:uppercase;letter-spacing:.12em}
+    .status-card .big{font-size:54px;font-weight:800;letter-spacing:-.06em}
+    .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .status-item{background:rgba(255,255,255,.07);padding:14px;border-radius:16px}.status-item b{display:block;font-size:18px;margin-top:4px}.status-item span{font-size:11px;color:#aaa1b7}
+    .section{margin-top:68px}.section h2{font-size:34px;letter-spacing:-.045em;margin:0 0 12px}.section p.sub{color:var(--muted);margin:0 0 25px}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(40,25,70,.035)}
+    .card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}.card h3{margin:10px 0 8px;font-size:20px;letter-spacing:-.03em}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+    .terminal{background:#15121b;color:#f3efff;border-radius:24px;padding:22px;overflow:auto;font:13px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:190px}
+    .demo-grid{display:grid;grid-template-columns:.75fr 1.25fr;gap:16px}
+    button{border:0;border-radius:14px;padding:13px 17px;background:var(--purple);color:#fff;font-weight:750;cursor:pointer;font-size:14px;box-shadow:0 9px 18px rgba(100,44,255,.20)}
+    button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+    .pill{display:inline-block;padding:6px 9px;border-radius:999px;background:#efe9ff;color:#5322db;font-size:11px;font-weight:800;margin-right:6px;margin-top:7px}
+    footer{margin-top:70px;border-top:1px solid var(--line);padding-top:24px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+    @media(max-width:850px){.hero,.demo-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.navlinks{display:none}.hero h1{font-size:56px}.status-card{min-height:260px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav>
+      <div class="brand"><div class="mark">33</div>33Jane</div>
+      <div class="navlinks">
+        <a href="/health">Health</a><a href="/assets">Assets</a><a href="/integrations">Integrations</a><a href="/evidence">Evidence</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div>
+        <div class="badge"><span class="dot" id="statusDot"></span><span id="statusText">Checking network…</span></div>
+        <h1>Permissioned liquidity, <span>solvable.</span></h1>
+        <p class="lede">33Jane is an RWA execution gateway for CoW Protocol: normalize restricted assets, verify eligibility, discover routes, simulate settlement, and expose only safe candidates to solvers.</p>
+        <div class="actions"><button id="solveBtn" onclick="runSolver()">Run solver demo</button></div>
+      </div>
+      <div class="status-card">
+        <div>
+          <div class="tiny">Protocol status</div>
+          <div class="big" id="version">v0.2.1</div>
+        </div>
+        <div class="status-grid">
+          <div class="status-item"><span>Milestones</span><b id="milestones">10 / 10</b></div>
+          <div class="status-item"><span>Deployment</span><b>Vercel</b></div>
+          <div class="status-item"><span>CoW live</span><b id="cowLive">—</b></div>
+          <div class="status-item"><span>RPC</span><b id="rpc">—</b></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Execution stack</h2>
+      <p class="sub">From RWA constraints to solver-ready, simulation-gated execution.</p>
+      <div class="cards">
+        <div class="card"><div class="k">01 — Registry</div><h3>RWA asset model</h3><p>Canonical asset metadata, settlement modes, issuer data, quote currencies and provider-defined constraints.</p></div>
+        <div class="card"><div class="k">02 — Eligibility</div><h3>Constraint engine</h3><p>Wallet claims, jurisdiction rules, trade limits and market-state checks before an order becomes executable.</p></div>
+        <div class="card"><div class="k">03 — Liquidity</div><h3>Universal adapters</h3><p>Issuer mint/redeem, RFQ, AMM, provider bridge and CoW Orderbook liquidity through one interface.</p></div>
+        <div class="card"><div class="k">04 — Routing</div><h3>Execution graph</h3><p>Direct and multi-hop routes that combine standard DeFi liquidity with permissioned RWA liquidity.</p></div>
+        <div class="card"><div class="k">05 — Safety</div><h3>Simulation certificates</h3><p>Route continuity, quote freshness, execution-plan checks and optional eth_call validation before settlement.</p></div>
+        <div class="card"><div class="k">06 — CoW</div><h3>Solver candidates</h3><p>Only routes with passing safety certificates are surfaced through the CoW sub-solver interface.</p></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Live registry</h2>
+      <p class="sub">The public deployment separates production asset metadata from synthetic demo liquidity.</p>
+      <div id="assets" class="cards"></div>
+    </section>
+
+    <section class="section">
+      <h2>Solver demo</h2>
+      <p class="sub">Runs the synthetic EURC → mTBILL route through routing + settlement-safety + sub-solver selection.</p>
+      <div class="demo-grid">
+        <div class="card">
+          <div class="k">Request</div>
+          <h3>100 EURC → mTBILL</h3>
+          <p>Demo identity carries KYC and GB jurisdiction claims. No synthetic result is represented as production issuer liquidity.</p>
+          <div><span class="pill">KYC</span><span class="pill">GB</span><span class="pill">3 hops max</span></div>
+        </div>
+        <pre class="terminal" id="terminal">Press “Run solver demo” to request a candidate.</pre>
+      </div>
+    </section>
+
+    <footer>
+      <span>33Jane · permissioned-liquidity infrastructure for CoW Protocol</span>
+      <span>Production issuer access is configuration-gated.</span>
+    </footer>
+  </div>
+
+  <script>
+    const terminal = document.getElementById('terminal');
+    const solveBtn = document.getElementById('solveBtn');
+
+    async function loadHealth(){
+      try{
+        const r = await fetch('/health');
+        const h = await r.json();
+        if(!r.ok) throw new Error(h.error || 'health failed');
+        document.getElementById('statusDot').classList.add('live');
+        document.getElementById('statusText').textContent = '33Jane API online';
+        document.getElementById('version').textContent = 'v' + h.version;
+        document.getElementById('milestones').textContent = h.milestones.length + ' / 10';
+        document.getElementById('cowLive').textContent = h.liveCow ? 'ON' : 'OFF';
+        document.getElementById('rpc').textContent = h.rpcConfigured ? 'ON' : 'OFF';
+      }catch(e){
+        document.getElementById('statusText').textContent = 'API unavailable';
+      }
+    }
+
+    async function loadAssets(){
+      try{
+        const r = await fetch('/assets');
+        const data = await r.json();
+        const el = document.getElementById('assets');
+        el.innerHTML = data.assets.map(a => `
+          <div class="card">
+            <div class="k">${a.metadata?.environment || 'unknown'}</div>
+            <h3>${a.symbol}</h3>
+            <p>${a.name}<br><strong>${a.category}</strong><br>${a.issuer}</p>
+          </div>`).join('');
+      }catch(e){}
+    }
+
+    async function runSolver(){
+      solveBtn.disabled = true;
+      solveBtn.textContent = 'Solving…';
+      terminal.textContent = 'Requesting route and safety certificate…';
+      try{
+        const r = await fetch('/cow/solve',{
+          method:'POST',
+          headers:{'content-type':'application/json'},
+          body:JSON.stringify({
+            sellAssetId:'1:eurc-demo',
+            buyAssetId:'1:mtbill-demo',
+            sellAmountAtomic:'100000000',
+            maxHops:3,
+            context:{
+              wallet:'0x000000000000000000000000000000000000beef',
+              claims:{kyc:true,jurisdiction:'GB'}
+            }
+          })
+        });
+        const data = await r.json();
+        terminal.textContent = JSON.stringify(data,null,2);
+      }catch(e){
+        terminal.textContent = String(e);
+      }finally{
+        solveBtn.disabled = false;
+        solveBtn.textContent = 'Run solver demo';
+      }
+    }
+
+    loadHealth();
+    loadAssets();
+  </script>
+</body>
+</html>
