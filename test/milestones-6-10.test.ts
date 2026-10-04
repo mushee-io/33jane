@@ -77,7 +77,7 @@ test("Milestone 8/9: provider bridge normalizes a real-provider shaped response"
   });
 
   assert.equal(quote?.buyAmountAtomic, "99800000");
-  const steps = await adapter.buildExecution(quote!, context);
+  const steps = await adapter.buildExecution(quote!);
   assert.equal(steps[0]?.target, "0x0000000000000000000000000000000000000010");
 });
 
