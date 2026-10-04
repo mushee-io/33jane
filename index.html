@@ -30,6 +30,20 @@
     .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .status-item{background:rgba(255,255,255,.07);padding:14px;border-radius:16px}.status-item b{display:block;font-size:18px;margin-top:4px}.status-item span{font-size:11px;color:#aaa1b7}
     .section{margin-top:68px}.section h2{font-size:34px;letter-spacing:-.045em;margin:0 0 12px}.section p.sub{color:var(--muted);margin:0 0 25px}
+    .explainer{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}
+    .explainer-copy{background:#fff;border:1px solid var(--line);border-radius:26px;padding:28px;box-shadow:var(--shadow)}
+    .explainer-copy p{color:var(--muted);line-height:1.7;font-size:16px;margin:0 0 16px}
+    .explainer-copy strong{color:var(--ink)}
+    .flow{background:#15121b;color:#f3efff;border-radius:26px;padding:26px;box-shadow:var(--shadow)}
+    .flow-title{font-size:12px;color:#b8afc8;text-transform:uppercase;letter-spacing:.12em;margin-bottom:18px}
+    .flow-stack{display:grid;gap:9px}
+    .flow-node{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);padding:12px 14px;border-radius:14px;font-size:14px}
+    .flow-arrow{text-align:center;color:#8f68ff;font-weight:900}
+    .question-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px}
+    .question{background:#f7f4ff;border:1px solid #e8e1fb;border-radius:14px;padding:12px 13px;font-size:13px;color:#514b5a}
+    .vision{margin-top:18px;padding:18px;border-radius:18px;background:linear-gradient(135deg,#f0eaff,#fbfaff);border:1px solid #dfd5ff}
+    .vision b{display:block;margin-bottom:6px}
+    .source-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
     .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 6px 20px rgba(40,25,70,.035)}
     .card .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em}.card h3{margin:10px 0 8px;font-size:20px;letter-spacing:-.03em}.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.55}
@@ -39,7 +53,7 @@
     button:disabled{opacity:.55;cursor:wait}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
     .pill{display:inline-block;padding:6px 9px;border-radius:999px;background:#efe9ff;color:#5322db;font-size:11px;font-weight:800;margin-right:6px;margin-top:7px}
     footer{margin-top:70px;border-top:1px solid var(--line);padding-top:24px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
-    @media(max-width:850px){.hero,.demo-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}.navlinks{display:none}.hero h1{font-size:56px}.status-card{min-height:260px}}
+    @media(max-width:850px){.hero,.demo-grid,.explainer{grid-template-columns:1fr}.cards,.question-grid{grid-template-columns:1fr}.navlinks{display:none}.hero h1{font-size:56px}.status-card{min-height:260px}}
   </style>
 </head>
 <body>
@@ -47,7 +61,7 @@
     <nav>
       <div class="brand"><div class="mark">33</div>33Jane</div>
       <div class="navlinks">
-        <a href="/health">Health</a><a href="/assets">Assets</a><a href="/integrations">Integrations</a><a href="/evidence">Evidence</a>
+        <a href="#what">What it does</a><a href="#stack">Stack</a><a href="/assets">Assets</a><a href="/evidence">Evidence</a>
       </div>
     </nav>
 
@@ -72,7 +86,66 @@
       </div>
     </section>
 
-    <section class="section">
+    <section class="section" id="what">
+      <h2>What 33Jane does</h2>
+      <p class="sub">The translation and execution layer between CoW solvers and permissioned / RWA liquidity.</p>
+      <div class="explainer">
+        <div class="explainer-copy">
+          <p><strong>Normal ERC-20 liquidity is easy for solvers to understand.</strong> Permissioned assets are different. Tokenized treasuries, private credit, RFQ markets and issuer mint/redeem products can require KYC, wallet eligibility, minimum trade sizes, market hours, transfer restrictions or provider-specific settlement logic.</p>
+          <p>33Jane gives CoW one normalized way to understand those markets. It checks whether an order is eligible, finds available RWA liquidity, compares execution paths, builds the route and simulates settlement before anything becomes a solver candidate.</p>
+
+          <div class="question-grid">
+            <div class="question">Is this wallet eligible?</div>
+            <div class="question">Is the asset tradable now?</div>
+            <div class="question">Does the trade meet minimum size?</div>
+            <div class="question">Can the recipient receive the asset?</div>
+            <div class="question">Is issuer mint liquidity available?</div>
+            <div class="question">Is there RFQ or DEX liquidity?</div>
+            <div class="question">Which route gives the best output?</div>
+            <div class="question">Will settlement actually succeed?</div>
+          </div>
+
+          <div class="vision">
+            <b>Why this matters for CoW</b>
+            Instead of every solver integrating each RWA issuer separately, solvers integrate 33Jane once. 33Jane handles the protocol-specific restrictions and execution logic underneath.
+          </div>
+
+          <div class="source-row">
+            <span class="pill">Tokenized Treasuries</span>
+            <span class="pill">Tokenized Stocks</span>
+            <span class="pill">Private Credit</span>
+            <span class="pill">Gold / Commodities</span>
+            <span class="pill">Permissioned AMMs</span>
+            <span class="pill">Institutional RFQs</span>
+          </div>
+        </div>
+
+        <div class="flow">
+          <div class="flow-title">Order flow</div>
+          <div class="flow-stack">
+            <div class="flow-node">User order</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">CoW Protocol</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node"><strong>33Jane</strong></div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">Check eligibility + restrictions</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">Discover issuer / RFQ / DEX liquidity</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">Compare quotes + build route</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">Simulate settlement</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">Safe solver-ready candidate</div>
+            <div class="flow-arrow">↓</div>
+            <div class="flow-node">CoW solver</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="stack">
       <h2>Execution stack</h2>
       <p class="sub">From RWA constraints to solver-ready, simulation-gated execution.</p>
       <div class="cards">
