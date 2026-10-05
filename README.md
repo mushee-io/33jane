@@ -242,6 +242,14 @@ CI runs all four gates on every push to `main`.
 
 ## Deployment
 
-The Vercel deployment serves the existing 33Jane console and the same consolidated API handler used by local development.
+Production:
 
-Real mainnet execution still depends on real issuer eligibility/provider credentials and the final signed CoW order-submission flow. The code does not claim those external capabilities when they are not configured.
+- Homepage: https://33jane.vercel.app
+- Execution console: https://33jane.vercel.app/console
+- Health: https://33jane.vercel.app/api/health
+- Readiness: https://33jane.vercel.app/api/readiness
+- OpenAPI: https://33jane.vercel.app/api/openapi
+
+The homepage and execution console are separate pages. The console exposes Trade, RWA Network, Integrations, Evidence, Developer API and Architecture views while using the same consolidated API handler as local development.
+
+Real mainnet execution still depends on an issuer-approved wallet and the final signed CoW order-submission flow. The code reports that remaining boundary explicitly rather than claiming unsupported execution.
