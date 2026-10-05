@@ -84,7 +84,7 @@
       <div class="bigcallout" style="margin-bottom:16px">
         <h2>Permissioned RWA Execution for CoW</h2>
         <p>33Jane gives CoW-compatible applications and solvers the eligibility checks, asset rules and specialized liquidity required to execute permissioned real-world assets.</p>
-        <div class="actions"><button class="primary" onclick="showView('network')">Explore Infrastructure</button><button class="secondary" onclick="showView('developer')">Developer API</button></div>
+        <div class="actions"><button class="primary" onclick="showView('network')">Explore Infrastructure</button><button class="secondary" onclick="showView('developer')">Developer API</button><button class="secondary" id="grantDemoTopBtn">Run Grant Demo</button></div>
       </div>
       <div class="grid cols2">
         <div class="card">
@@ -122,6 +122,17 @@
             <div class="stage"><div><b>Order submission</b><small>Route + calldata preparation are live; wallet signing/broadcast is the remaining gate.</small></div><span class="chip warn">SIGNING GATED</span></div>
           </div>
         </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h2>Grant demo</h2>
+        <p class="sub">Two proofs, clearly separated: production mode uses OpenEden's real on-chain KYC and can block an ineligible wallet; demo mode uses explicitly synthetic assets and claims to prove the complete routing architecture without pretending to be institutional liquidity.</p>
+        <div class="grid cols2" style="margin-top:16px">
+          <div class="item"><div><strong>Production enforcement</strong><span>Real OpenEden KYC + issuer vault. Your connected wallet may be rejected.</span></div><span class="chip ok">REAL</span></div>
+          <div class="item"><div><strong>Executable architecture demo</strong><span>jUSDC → Jane Treasury USD across RFQ, issuer mint and permissioned-pool adapters.</span></div><span class="chip purple">MOCK</span></div>
+        </div>
+        <div class="actions"><button class="primary" id="grantDemoBtn">Run complete grant demo</button></div>
+        <pre class="terminal" id="grantDemoTerminal" style="margin-top:14px;min-height:150px">Ready. This demo is synthetic and will never be presented as production issuer liquidity.</pre>
       </div>
 
       <div class="grid cols2" style="margin-top:16px">
@@ -437,10 +448,67 @@
     }catch(e){term.textContent=JSON.stringify(e.data||{error:e.message},null,2)}
   }
 
+
+  async function runGrantDemo(){
+    const buttons=[document.getElementById('grantDemoBtn'),document.getElementById('grantDemoTopBtn')].filter(Boolean);
+    const term=document.getElementById('grantDemoTerminal');
+    buttons.forEach(b=>{b.disabled=true;b.textContent='Running grant demo…'});
+    term.textContent='Running explicit MOCK flow: eligible demo wallet → rules → RFQ/issuer/pool quotes → best executable route…';
+
+    try{
+      const data=await api('/api/route',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({
+          wallet:'0x000000000000000000000000000000000000bEEF',
+          chainId:1,
+          sellToken:'1:jusdc-demo',
+          buyToken:'1:jane-treasury-demo',
+          sellAmount:'1000000000',
+          jurisdiction:'GB',
+          side:'BUY',
+          demoClaims:{kyc:true,transferAllowed:true}
+        })
+      });
+
+      const best=data.bestRoute?.quote;
+      const alternatives=(data.alternatives||[]).map(x=>({
+        adapterId:x.quote?.adapterId,
+        buyAmount:x.quote?.buyAmount,
+        executable:x.quote?.executable
+      }));
+
+      term.textContent=JSON.stringify({
+        mode:'DEMO / MOCK ONLY',
+        productionClaim:false,
+        eligible:data.eligible,
+        routeId:data.routeId,
+        bestExecutableRoute:best?{
+          adapterId:best.adapterId,
+          source:best.source,
+          settlementType:best.settlementType,
+          sellAmount:best.sellAmount,
+          buyAmount:best.buyAmount,
+          executable:best.executable
+        }:null,
+        alternatives,
+        rejected:data.rejected,
+        proof:'33Jane selected the best executable route after eligibility and execution checks.'
+      },null,2);
+    }catch(e){
+      term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
+    }finally{
+      buttons.forEach(b=>{b.disabled=false;b.textContent=b.id==='grantDemoTopBtn'?'Run Grant Demo':'Run complete grant demo'});
+      setTimeout(()=>term.scrollIntoView({behavior:'smooth',block:'center'}),100);
+    }
+  }
+
   document.getElementById('quoteBtn').onclick=liveQuote;
   document.getElementById('eligibilityBtn').onclick=checkEligibility;
   document.getElementById('routeBtn').onclick=findRoute;
   document.getElementById('prepareBtn').onclick=prepareSettlement;
+  document.getElementById('grantDemoBtn').onclick=runGrantDemo;
+  document.getElementById('grantDemoTopBtn').onclick=runGrantDemo;
   if(window.ethereum){
     window.ethereum.request({method:'eth_accounts'}).then(a=>{state.wallet=a[0]||null;renderWallet()}).catch(()=>{});
     window.ethereum.on?.('accountsChanged',a=>{state.wallet=a[0]||null;renderWallet()});
