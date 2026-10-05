@@ -155,11 +155,29 @@
         <div class="card"><div class="metriclabel">RPC health</div><div class="metric" id="rpcHealth">—</div></div>
         <div class="card"><div class="metriclabel">CoW adapter</div><div class="metric" id="cowHealth">—</div></div>
       </div>
-      <div class="card" style="margin-top:16px"><h2>RWA Registry</h2><p class="sub">Production metadata is clearly separated from demo fixtures.</p><div class="assetlist" id="assetList"></div></div>
+      <div class="card" style="margin-top:16px">
+        <h2>Production RWA Registry</h2>
+        <p class="sub">Only live production assets are shown here by default.</p>
+        <div class="assetlist" id="assetList"></div>
+        <details style="margin-top:18px">
+          <summary style="cursor:pointer;font-weight:800">Show Demo / Test Assets</summary>
+          <p class="sub" style="margin-top:10px">Synthetic fixtures used only for the reviewer demo and automated tests. They are not production liquidity.</p>
+          <div class="assetlist" id="demoAssetList"></div>
+        </details>
+      </div>
     </section>
 
     <section class="view" id="view-integrations">
-      <div class="card"><h2>Liquidity integrations</h2><p class="sub">Every source is normalized into the same 33Jane adapter interface.</p><div class="integrationlist" id="integrationList"></div></div>
+      <div class="card">
+        <h2>Production Liquidity Integrations</h2>
+        <p class="sub">Live integrations currently available to the production path.</p>
+        <div class="integrationlist" id="integrationList"></div>
+        <details style="margin-top:18px">
+          <summary style="cursor:pointer;font-weight:800">Show Demo / Test Adapters</summary>
+          <p class="sub" style="margin-top:10px">Synthetic adapters used only for tests and the explicit grant demo.</p>
+          <div class="integrationlist" id="demoIntegrationList"></div>
+        </details>
+      </div>
       <div class="card" style="margin-top:16px"><h2>Issuer bridge</h2><p class="sub">OpenEden is connected directly through its Ethereum vault and KYC contracts.</p><div class="notice">33Jane reads issuer-controlled eligibility, fees, rate, limits, pause state and builds real USDC approval + deposit calldata. No browser self-attestation is trusted for production eligibility.</div></div>
     </section>
 
@@ -282,12 +300,27 @@
   }
 
   function renderAssets(){
-    const box=document.getElementById('assetList');
-    box.innerHTML=state.assets.map(a=>`<div class="item"><div><strong>${a.symbol} · ${a.name}</strong><span>${a.assetType} · ${a.issuer}</span><div class="address">${a.contractAddress}</div></div><span class="chip ${a.metadata?.environment==='production'?'ok':'purple'}">${(a.metadata?.environment||'unknown').toUpperCase()}</span></div>`).join('');
+    const production=state.assets.filter(a=>a.metadata?.environment==='production');
+    const demo=state.assets.filter(a=>a.metadata?.environment!=='production');
+    const row=(a,label,cls)=>`<div class="item"><div><strong>${a.symbol} · ${a.name}</strong><span>${a.assetType} · ${a.issuer}</span><div class="address">${a.contractAddress}</div></div><span class="chip ${cls}">${label}</span></div>`;
+    document.getElementById('assetList').innerHTML=
+      production.map(a=>row(a,'PRODUCTION','ok')).join('')||
+      '<div class="empty">No production assets registered.</div>';
+    document.getElementById('demoAssetList').innerHTML=
+      demo.map(a=>row(a,'DEMO','purple')).join('')||
+      '<div class="empty">No demo fixtures registered.</div>';
   }
+
   function renderIntegrations(){
-    const box=document.getElementById('integrationList');
-    box.innerHTML=state.integrations.map(a=>`<div class="item"><div><strong>${a.id}</strong><span>${a.pairs.length} supported pair(s)</span></div><span class="chip ok">REGISTERED</span></div>`).join('')||'<div class="empty">No adapters registered.</div>';
+    const production=state.integrations.filter(a=>!a.id.startsWith('demo-'));
+    const demo=state.integrations.filter(a=>a.id.startsWith('demo-'));
+    const row=(a,label,cls)=>`<div class="item"><div><strong>${a.id}</strong><span>${a.pairs.length} supported pair(s)</span></div><span class="chip ${cls}">${label}</span></div>`;
+    document.getElementById('integrationList').innerHTML=
+      production.map(a=>row(a,'LIVE','ok')).join('')||
+      '<div class="empty">No production adapters registered.</div>';
+    document.getElementById('demoIntegrationList').innerHTML=
+      demo.map(a=>row(a,'DEMO','purple')).join('')||
+      '<div class="empty">No demo adapters registered.</div>';
   }
   function renderEvidence(e){
     document.getElementById('solveTotal').textContent=e.solves?.total??0;
