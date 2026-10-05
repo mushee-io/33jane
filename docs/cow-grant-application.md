@@ -6,7 +6,7 @@
 GitHub: https://github.com/mushee-io/33jane  
 Live deployment: https://33jane.vercel.app
 
-Main point of contact: **[INSERT NAME / FORUM USERNAME]**
+Main point of contact: **Innocent Nnorom / Mushee**
 
 ## Experiences and qualifications
 
@@ -234,7 +234,8 @@ No browser-supplied self-attestation will be presented as real issuer KYC.
 
 ## Current links
 
-- Live application: https://33jane.vercel.app
+- Homepage: https://33jane.vercel.app
+- Live execution console: https://33jane.vercel.app/console
 - Health: https://33jane.vercel.app/api/health
 - Eligibility provider health: https://33jane.vercel.app/api/eligibility/provider
 - Issuer provider health: https://33jane.vercel.app/api/issuer/provider
