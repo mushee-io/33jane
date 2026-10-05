@@ -1,5 +1,9 @@
 # Grant Application - 33Jane: Permissioned RWA Execution Infrastructure for CoW Protocol
 
+## Grant Title
+
+**Grant Application - 33Jane: Permissioned RWA Execution Infrastructure for CoW Protocol**
+
 ## Author(s)
 
 **Mushee / 33Jane**  
@@ -218,11 +222,11 @@ The existing prototype and all pre-approval development are contributed by Mushe
 
 No COW token request is included in this application.
 
-## Ethereum Mainnet Payment Address
+## Payment Address
 
 **0xc7f8f2428527a9d5e7e10d769f6ee9148642950f**
 
-Per CIP-82, the Grants Treasury has migrated to Ethereum mainnet.
+Ethereum mainnet payment address. The current CIP-82 mandate migrated the Grants Treasury Safe to Ethereum mainnet; the older forum template still labels this field as a Gnosis Chain address.
 
 ## Open-source commitment
 
@@ -288,6 +292,6 @@ The project's success should ultimately be measured by executable liquidity surf
 
 ## Terms and Conditions
 
-By submitting this grant application, I acknowledge and agree to be bound by the CoW DAO Participation Agreement and the CoW DAO Grant Agreement Terms.
+By submitting this grant application, I acknowledge and agree to be bound by the [CoW DAO Participation Agreement](https://gateway.pinata.cloud/ipfs/Qmf9MYhcG2pFrDoVy13p6FWeVF4nG9HbJvRfYYbhazTCFe) and the [CoW DAO Grant Agreement Terms](https://bafkreifcftgaleyxkekkic36beyveiomqmlwyduyfh3s25zj3uyngr6ht4.ipfs.dweb.link/).
 
 **Note to Committee:** Please notify the Grantee of their reviewer and steward in the thread and latest upon successful approval of the Grant on Snapshot.
