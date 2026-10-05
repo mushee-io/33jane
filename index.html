@@ -312,18 +312,54 @@
 
   async function checkEligibility(){
     if(!state.wallet){await connectWallet();if(!state.wallet)return}
-    const amount=Number(document.getElementById('amount').value);
-    const atomic=BigInt(Math.round(amount*1e6)).toString();
+
+    const btn=document.getElementById('eligibilityBtn');
     const term=document.getElementById('tradeTerminal');
+    const summary=document.getElementById('routeSummary');
+    const amount=Number(document.getElementById('amount').value);
+
+    if(!Number.isFinite(amount)||amount<=0){
+      term.textContent='Enter a valid USDC amount.';
+      return;
+    }
+
+    const atomic=BigInt(Math.round(amount*1e6)).toString();
+
+    btn.disabled=true;
+    btn.textContent='Checking constraints…';
+    term.textContent='Checking OpenEden KYC status, ban status, transfer rules, and 33Jane asset constraints…';
+    summary.className='';
+    summary.innerHTML='<div class="stage"><div><b>Checking 33Jane constraints</b><small>OpenEden KYC → wallet status → asset rules</small></div><span class="chip purple">CHECKING</span></div>';
+
     try{
-      const data=await api('/api/eligibility',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({
-        wallet:state.wallet,asset:'1:openeden-tbill',chainId:1,amount:atomic,side:'BUY'
-      })});
+      const data=await api('/api/eligibility',{
+        method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({
+          wallet:state.wallet,
+          asset:'1:openeden-tbill',
+          chainId:1,
+          amount:atomic,
+          side:'BUY'
+        })
+      });
+
       term.textContent=JSON.stringify(data,null,2);
+      summary.innerHTML='<div class="stage"><div><b>33Jane eligibility gate</b><small>Wallet passed the current production constraints.</small></div><span class="chip ok">ELIGIBLE</span></div><div class="stage"><div><b>Next</b><small>Click "Find executable route".</small></div><span class="chip purple">ROUTE</span></div>';
     }catch(e){
-      term.textContent=JSON.stringify(e.data||{error:e.message},null,2);
-      const reasons=e.data?.reasons||[];
-      document.getElementById('routeSummary').innerHTML=`<div class="stage"><div><b>33Jane eligibility gate</b><small>${reasons.join(', ')||'Provider eligibility is not verified.'}</small></div><span class="chip warn">BLOCKED</span></div><div class="notice">This is a real issuer eligibility rejection from the connected OpenEden KYC path. 33Jane intentionally does not let the browser self-declare professional-investor eligibility.</div>`;
+      const data=e.data||{error:e.message};
+      term.textContent=JSON.stringify(data,null,2);
+
+      const reasons=[
+        ...(data.reasons||[]),
+        ...((data.checks||[]).filter(x=>x.passed===false).map(x=>x.code||x.message))
+      ].filter(Boolean);
+
+      summary.innerHTML='<div class="stage"><div><b>33Jane eligibility gate</b><small>'+(reasons.join(' · ')||data.error||'Issuer eligibility failed')+'</small></div><span class="chip warn">BLOCKED</span></div><div class="notice">The button worked. This is a real eligibility result from the OpenEden on-chain KYC path; 33Jane will not continue to settlement unless the wallet passes.</div>';
+    }finally{
+      btn.disabled=false;
+      btn.textContent='Check 33Jane constraints';
+      setTimeout(()=>summary.scrollIntoView({behavior:'smooth',block:'center'}),100);
     }
   }
 
