@@ -19,7 +19,7 @@
     .landing-vignette{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.24),transparent 24%,transparent 75%,rgba(0,0,0,.35));pointer-events:none}
     .landing-nav{position:relative;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:20px 24px}
     .landing-nav-left{display:flex;align-items:center;gap:38px}
-    .landing-brand{display:inline-flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:19px;font-weight:650;letter-spacing:-.04em}
+    .landing-brand{display:inline-flex;align-items:center;color:#fff;text-decoration:none}.landing-logo{display:block;width:92px;height:auto;filter:invert(1)}
     .landing-mark{display:grid;place-items:center;width:31px;height:31px;border-radius:9px;background:#fff;color:#090b12;font-size:12px;font-weight:800}
     .landing-links{display:none;align-items:center;gap:34px}
     .landing-link{color:rgba(255,255,255,.78);font-size:14px;text-decoration:none;transition:color .2s ease}
@@ -69,7 +69,7 @@
 
   <nav class="landing-nav" aria-label="Primary navigation">
     <div class="landing-nav-left">
-      <a class="landing-brand" href="/"><span class="landing-mark">33</span><span>33Jane</span></a>
+      <a class="landing-brand" href="/" aria-label="33Jane home"><img class="landing-logo" src="/33jane-logo.svg" alt="33Jane"/></a>
       <div class="landing-links">
         <a class="landing-link" href="/">Home</a>
         <a class="landing-link" href="/console#network">RWA Network</a>
