@@ -6,11 +6,13 @@
 
 ## Author(s)
 
-**Mushee / 33Jane**  
+**Mateo Castejon / Mushee / 33Jane**  
 GitHub: https://github.com/mushee-io/33jane  
 Live deployment: https://33jane.vercel.app
 
-Main point of contact: **Innocent Nnorom / Mushee**
+Main point of contact: **Mateo Castejon**
+
+Mateo has previously worked with **BitMart** and **Kraken** and is currently working with **Mushee**.
 
 ## Experiences and qualifications
 
