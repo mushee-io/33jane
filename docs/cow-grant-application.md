@@ -220,7 +220,7 @@ No COW token request is included in this application.
 
 ## Ethereum Mainnet Payment Address
 
-**[INSERT ETHEREUM MAINNET PAYMENT ADDRESS]**
+**0xc7f8f2428527a9d5e7e10d769f6ee9148642950f**
 
 Per CIP-82, the Grants Treasury has migrated to Ethereum mainnet.
 
