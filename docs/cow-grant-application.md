@@ -218,9 +218,11 @@ The existing prototype and all pre-approval development are contributed by Mushe
 
 No COW token request is included in this application.
 
-## Gnosis Chain Address
+## Ethereum Mainnet Payment Address
 
-**[INSERT GNOSIS CHAIN PAYMENT ADDRESS]**
+**[INSERT ETHEREUM MAINNET PAYMENT ADDRESS]**
+
+Per CIP-82, the Grants Treasury has migrated to Ethereum mainnet.
 
 ## Open-source commitment
 
