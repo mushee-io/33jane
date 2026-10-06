@@ -1,4 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
+import { JaneAIService } from "../ai/service.js";
+import { feedbackSchema, janeRequestSchema } from "../ai/schemas.js";
 import type { createApp } from "../bootstrap.js";
 import type { ProductionAsset } from "../production/types.js";
 import {
@@ -71,6 +73,7 @@ function zodError(error: unknown): Response {
 }
 
 export function createApiHandler(app: App) {
+  const janeAI = new JaneAIService();
   const limiter = new FixedWindowRateLimiter(Number(process.env.RATE_LIMIT_PER_MINUTE ?? 120));
 
   return async function handle(request: Request): Promise<Response> {
@@ -89,6 +92,53 @@ export function createApiHandler(app: App) {
     if (!rate.allowed) return json({ error: "RATE_LIMITED" }, 429, rateHeaders);
 
     try {
+      // 33jane AI platform endpoints are intentionally independent from the legacy
+      // RWA execution stack below. This keeps AI routing fast and deployable even
+      // when no database/RPC is configured.
+      if (request.method === "GET" && path === "/api/ai/health") {
+        return json(janeAI.health(), 200, rateHeaders);
+      }
+
+      if (request.method === "GET" && path === "/api/ai/models") {
+        return json({ models: janeAI.models() }, 200, rateHeaders);
+      }
+
+      if (request.method === "GET" && path === "/api/ai/metrics") {
+        return json({ metrics: janeAI.telemetry.snapshot() }, 200, rateHeaders);
+      }
+
+      if (request.method === "POST" && path === "/api/ai/route") {
+        let input;
+        try { input = janeRequestSchema.parse(await parseBody(request)); }
+        catch (error) { return zodError(error); }
+        return json(janeAI.preview(input), 200, rateHeaders);
+      }
+
+      if (request.method === "POST" && path === "/api/ai/chat") {
+        let input;
+        try { input = janeRequestSchema.parse(await parseBody(request)); }
+        catch (error) { return zodError(error); }
+
+        try {
+          return json(await janeAI.chat(input), 200, rateHeaders);
+        } catch (error) {
+          const value = error as Error & { route?: unknown; failures?: unknown };
+          const status = value.message === "NO_LIVE_AI_PROVIDER_CONFIGURED" ? 503 : 502;
+          return json({
+            error: value.message,
+            route: value.route,
+            failures: value.failures
+          }, status, rateHeaders);
+        }
+      }
+
+      if (request.method === "POST" && path === "/api/ai/feedback") {
+        let input;
+        try { input = feedbackSchema.parse(await parseBody(request)); }
+        catch (error) { return zodError(error); }
+        return json(janeAI.feedback(input.requestId, input.signal), 200, rateHeaders);
+      }
+
       const p = app.production;
       await p.assets.ready();
 
