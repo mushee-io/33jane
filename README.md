@@ -1,211 +1,136 @@
-# 33Jane
+# 33jane
 
-## Permissioned RWA Execution Infrastructure for CoW Protocol
+**The private intelligence router for the internet.**
 
-CoW Protocol can optimize execution across liquidity sources, but permissioned assets introduce constraints that ordinary token routing cannot solve alone.
+33jane is a multi-model AI access layer that automatically chooses the best available model for each request based on **quality, price, speed, reliability and privacy**.
 
-**33Jane provides the eligibility, restriction and specialized liquidity layer required to make these assets executable.**
+The product principle is simple:
 
-33Jane does not try to be an RWA exchange or another generic DEX. It determines whether an economically attractive route is actually permitted and executable, returns the **best executable route**, prepares settlement requirements, and records the decision trail.
+> No model should know more than it needs to know.
+
+This branch contains the first five AI-platform milestones for the Monad Metropolis build while preserving the repository's earlier RWA/CoW work underneath the same codebase during the transition.
+
+## What is live in Milestones 1-5
+
+### M1 — 33jane Chat
+- responsive chat application
+- Auto / Fast / Reason / Code / Vision / Private modes
+- local browser conversation history
+- local text-file attachment support
+- provider health indicator
+- per-answer route/cost metadata
+
+### M2 — Multi-model intelligence router
+- task classification
+- configurable OpenAI, Groq and OpenRouter routes
+- optional OpenAI-compatible confidential endpoint
+- model capability, context-window, speed and privacy scoring
+- automatic provider failover when a selected route fails
+
+### M3 — Price Optimizer
+- input/output token estimation
+- configurable per-model pricing
+- quality threshold before cost optimization
+- effective cost adjusted by observed reliability
+- estimated savings and alternative-route comparison
+
+Pricing values are routing estimates and are environment-configurable. They are not hard-coded billing guarantees from providers.
+
+### M4 — Outcome-based routing
+- execution success/failure telemetry
+- latency tracking
+- retry and thumbs-up/down feedback
+- Bayesian reliability prior for new models
+- model quality score adapts to real outcomes
+
+The current alpha telemetry store is process memory. Durable telemetry is a later milestone.
+
+### M5 — Local privacy firewall
+Sensitive values are detected and replaced **in the browser before the request is sent to 33jane**.
+
+Current detectors include:
+- email addresses
+- phone-like identifiers
+- API keys
+- bearer tokens
+- IBANs
+- UK National Insurance-style identifiers
+- 32-byte hex private-key patterns
+
+The upstream model receives placeholders such as `<EMAIL_1>`. 33jane rehydrates those placeholders locally for the user after inference.
 
 ## Architecture
 
 ```text
-User / Application
-        |
-        v
-     CoW Order
-        |
-        v
-      33Jane
-        |
-   +----+------------------+
-   |                       |
-Asset Registry       Wallet Eligibility
-   |                       |
-Asset Rules          Access / Compliance
-   +-----------+-----------+
-               |
-      Execution Constraints
-               |
-     +---------+-----------+
-     |         |           |
-    RFQ   Mint/Redeem  Permissioned Pool
-     +---------+-----------+
-               |
-       Quote Normalization
-               |
-        Route Selection
-               |
-     Best Executable Route
-               |
-      CoW Integration Layer
-               |
-     Settlement Preparation
-               |
-        Execution / Receipt
+User
+  |
+  v
+Browser privacy firewall
+  |  redact/minimize before upload
+  v
+33jane Router
+  |-- task classifier
+  |-- quality threshold
+  |-- price optimizer
+  |-- reliability/outcome score
+  |-- privacy policy
+  v
+Selected AI provider
+  |
+  v
+33jane response metadata
+  |
+  v
+Browser rehydrates protected values
 ```
 
-## Asset registry
+## API
 
-The production asset model supports chain/address metadata, issuer data, permissioning, KYC/accreditation requirements, jurisdiction rules, min/max sizes, market hours, transfer restrictions, liquidity adapters, settlement modes and status.
-
-Administrative writes are protected with `ADMIN_API_KEY`.
-
-- `GET /api/assets`
-- `GET /api/assets/:assetId`
-- `GET /api/assets/:assetId/rules`
-- `GET /api/eligibility/provider` — eligibility-provider health/source
-- `GET /api/issuer/provider` — OpenEden on-chain issuer/vault health
-- `POST /api/assets` (admin)
-- `PATCH /api/assets/:assetId` (admin)
-
-## Eligibility engine
-
-`POST /api/eligibility`
-
-Rules are composable and machine-readable:
-
-- wallet whitelist
-- KYC requirement
-- jurisdiction allowlist/blocklist
-- min/max trade size
-- market hours
-- asset active/inactive
-- accreditation
-- transfer restrictions
-- liquidity venue restrictions
-
-Production assets do not trust browser self-attestation. For OpenEden TBILL on Ethereum, 33Jane now reads the issuer-controlled on-chain KycManager directly using `ETH_RPC_URL` and checks `isKyc` / `isBanned`. The current mainnet KycManager address is `0x51Be497AcEd1a2C19f6151064301e356B020D947`.
-
-For other issuers, an external trusted eligibility service can still be configured with `ELIGIBILITY_PROVIDER_URL`.
-
-## Liquidity adapters
-
-The existing adapter architecture is preserved and used by the production router:
-
-- RFQ
-- issuer mint/redeem
-- permissioned AMM
-- provider HTTP bridge
-- CoW Orderbook
-
-Demo adapters are clearly prefixed `demo-` and are never presented as production liquidity.
-
-## Routing
-
-`POST /api/route`
-
-Routing performs:
-
-1. asset resolution
-2. restriction/eligibility checks
-3. compatible adapter discovery
-4. concurrent quote requests
-5. quote normalization
-6. expiry/output/executability validation
-7. rejection of non-executable quotes
-8. ranking by executable output, fees and settlement complexity
-9. persistence of quote/route evidence
-10. best executable route + alternatives
-
-A better-priced quote that cannot execute is rejected in favor of an executable alternative.
-
-## CoW integration
-
-CoW-specific translation is isolated under `src/integrations/cow/`.
-
-- `POST /api/cow/quote`
-- `POST /api/cow/route`
-- `POST /api/cow/prepare`
-- `GET /api/cow/routes/:routeId`
-
-33Jane accepts CoW-like sell-order requests, evaluates permissioned-asset constraints, discovers specialized liquidity and returns deterministic solver-consumable route information.
-
-This is structured for future specialist external-liquidity/BYOS integration without claiming unsupported CoW behavior.
-
-## Execution preparation
-
-`POST /api/execute/prepare`
-
-33Jane does not blindly execute transactions. Preparation returns:
-
-- transactions that can actually be built
-- approvals
-- required signatures
-- expiry
-- settlement metadata
-- simulation certificate/result
-- explicit execution mode: `SIMULATED`, `TESTNET`, `MANUAL_RFQ`, `MAINNET_READY`, or `MAINNET`
-
-## Order lifecycle and audit
-
-Orders persist these states:
-
-`CREATED -> CHECKING_ELIGIBILITY -> INELIGIBLE | ROUTE_FOUND -> AWAITING_APPROVAL | READY -> SUBMITTED -> SETTLED`
-
-Failures, expiry and cancellation are also represented.
-
-- `GET /api/orders`
-- `GET /api/orders/:id`
-- `POST /api/orders`
-- `POST /api/orders/:id/cancel`
-- `GET /api/audit?orderId=...`
-
-Audit records include eligibility decisions, rules, quotes, rejected routes, selected route and execution preparation. Private keys and provider secrets are never persisted.
-
-## Persistence
-
-Production persistence uses PostgreSQL through `DATABASE_URL`.
-
-Migration:
-
-```bash
-npm run migrate
+### Health
+```
+GET /api/ai/health
 ```
 
-The schema persists:
+### Models
+```
+GET /api/ai/models
+```
 
-- assets
-- asset rules
-- eligibility checks
-- liquidity providers
-- quotes
-- routes
-- orders
-- executions
-- audit events
+### Preview a route without executing inference
+```
+POST /api/ai/route
+```
 
-Without `DATABASE_URL`, 33Jane deliberately reports `memory-fallback` in health/readiness and should not be treated as durable production infrastructure.
+Example:
 
-## Demo
+```json
+{
+  "mode": "auto",
+  "messages": [
+    { "role": "user", "content": "Debug this TypeScript function" }
+  ],
+  "clientPrivacy": {
+    "applied": true,
+    "redactedCount": 1,
+    "categories": ["EMAIL"]
+  }
+}
+```
 
-The repository includes explicitly labelled **DEMO / MOCK** assets:
+### Execute
+```
+POST /api/ai/chat
+```
 
-- `jUSDC`
-- `Jane Treasury USD (JTUSD)`
+### Feed outcomes back into routing
+```
+POST /api/ai/feedback
+```
 
-Jane Treasury USD requires a demo whitelist, KYC flag, permitted jurisdiction and a minimum $1,000 atomic-equivalent trade. Demo RFQ, issuer mint and permissioned-pool adapters demonstrate the architecture without presenting simulated liquidity as institutional liquidity.
-
-The contrast is tested:
-
-- eligible demo wallet -> route selected
-- ineligible wallet -> rejected before execution
-- best-price non-executable quote -> rejected
-- worse-price executable quote -> selected
-
-## Developer API
-
-OpenAPI:
-
-- `GET /api/openapi`
-
-Core endpoints:
-
-- `POST /api/eligibility`
-- `POST /api/route`
-- `POST /api/cow/quote`
-- `POST /api/cow/prepare`
+### Router telemetry
+```
+GET /api/ai/metrics
+```
 
 ## Local development
 
@@ -215,41 +140,46 @@ cp .env.example .env
 npm run dev
 ```
 
-## Environment variables
+Open the static frontend through the deployment/dev static server and point it at the API process.
 
-- `DATABASE_URL` — PostgreSQL persistence
-- `ADMIN_API_KEY` — protected asset-registry writes
-- `ETH_RPC_URL` — mainnet RPC / eth_call simulation
-- `ENABLE_COW_LIVE` — CoW Orderbook adapter
-- `ELIGIBILITY_PROVIDER_URL` — trusted production eligibility provider
-- `ELIGIBILITY_PROVIDER_API_KEY` — optional provider credential
-- `OPENEDEN_QUOTE_URL` — optional approved HTTP issuer/provider bridge
-- `OPENEDEN_API_KEY` — optional HTTP issuer credential
+At least one provider credential is required for live inference. Route previews still work without credentials.
 
-OpenEden mint execution no longer depends on the HTTP bridge: when `ETH_RPC_URL` is configured, 33Jane also registers the live Ethereum OpenEden vault adapter, reads the vault's rate/fees/limits from chain, and prepares real USDC approval + `deposit()` calldata.
-- `RATE_LIMIT_PER_MINUTE` — API rate limit
+## Provider configuration
 
-## Testing
+See `.env.example`.
+
+Supported alpha routes:
+- OpenAI-compatible OpenAI endpoint
+- Groq OpenAI-compatible endpoint
+- OpenRouter
+- custom private OpenAI-compatible endpoint
+
+Model IDs, price estimates, privacy flags and quality scores can all be changed through environment variables without changing application code.
+
+## Tests
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
+npm run check
 ```
 
-CI runs all four gates on every push to `main`.
+The AI tests cover classification, cheapest-adequate routing, private-mode restrictions, outcome learning and reliability learning.
 
-## Deployment
+## Monad direction
 
-Production:
+Prompts and AI responses remain offchain.
 
-- Homepage: https://33jane.vercel.app
-- Execution console: https://33jane.vercel.app/console
-- Health: https://33jane.vercel.app/api/health
-- Readiness: https://33jane.vercel.app/api/readiness
-- OpenAPI: https://33jane.vercel.app/api/openapi
+The Monad phase will add programmable inference budgets, settlement and verifiable execution receipts while keeping private content offchain.
 
-The homepage and execution console are separate pages. The console exposes Trade, RWA Network, Integrations, Evidence, Developer API and Architecture views while using the same consolidated API handler as local development.
+```text
+Private inference offchain
+        +
+Programmable settlement on Monad
+```
 
-Real mainnet execution still depends on an issuer-approved wallet and the final signed CoW order-submission flow. The code reports that remaining boundary explicitly rather than claiming unsupported execution.
+## Legacy RWA / CoW module
+
+The original permissioned-RWA work remains in the repository while 33jane transitions to the AI platform. Its existing console and server modules have not been deleted by this branch. The new AI endpoints are isolated under `src/ai/` and `/api/ai/*`.
+
+## License
+
+MIT
