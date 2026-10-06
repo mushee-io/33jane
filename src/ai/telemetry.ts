@@ -54,10 +54,8 @@ export class JaneTelemetry {
     this.metrics.set(modelId, {
       ...current,
       retries: current.retries + (signal === "retry" ? 1 : 0),
-      successes: current.successes + (signal === "success" ? 1 : 0),
-      failures: current.failures + (signal === "failure" ? 1 : 0),
-      positiveFeedback: current.positiveFeedback + (signal === "thumbs_up" ? 1 : 0),
-      negativeFeedback: current.negativeFeedback + (signal === "thumbs_down" ? 1 : 0)
+      positiveFeedback: current.positiveFeedback + (signal === "thumbs_up" || signal === "success" ? 1 : 0),
+      negativeFeedback: current.negativeFeedback + (signal === "thumbs_down" || signal === "failure" || signal === "retry" ? 1 : 0)
     });
   }
 
